@@ -50,9 +50,9 @@ struct ContentView: View {
                         Label("Awards", systemImage: "rosette")
                     }
                 
-                Text("Settings")
+                ProfileView()
                     .tabItem {
-                        Label("Settings", systemImage: "gearshape")
+                        Label("Profile", systemImage: "gearshape")
                     }
             }
             .preferredColorScheme(.dark)
