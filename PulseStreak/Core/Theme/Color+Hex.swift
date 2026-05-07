@@ -25,4 +25,15 @@ extension Color {
             opacity: Double(a) / 255
         )
     }
+    
+    // MARK: - Stitch 'Ember & Ash' Theme Colors
+    static let stitchBackground = Color(hex: "#0A0A0A")
+    static let stitchSurface = Color(hex: "#161616")
+    static let stitchPrimary = Color(hex: "#FF8C00")
+    static let stitchPrimaryBright = Color(hex: "#FFA500")
+    static let stitchSecondary = Color(hex: "#8A2BE2")
+    
+    static var stitchGradient: LinearGradient {
+        LinearGradient(colors: [stitchPrimary, stitchPrimaryBright], startPoint: .topLeading, endPoint: .bottomTrailing)
+    }
 }

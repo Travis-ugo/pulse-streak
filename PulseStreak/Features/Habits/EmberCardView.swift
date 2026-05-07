@@ -1,17 +1,29 @@
 import SwiftUI
 import SwiftData
-struct HabitCardView: View {
+
+struct EmberCardView: View {
     let habit: Habit
     @Environment(\.modelContext) private var modelContext
     @State private var isCompletedToday: Bool = false
     
     var body: some View {
         HStack(spacing: 16) {
+            // Left Glow Border Indicator
+            if isCompletedToday {
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(Color.stitchGradient)
+                    .frame(width: 4)
+                    .padding(.vertical, 12)
+                    .shadow(color: Color.stitchPrimary.opacity(0.5), radius: 8, x: 2, y: 0)
+            } else {
+                Spacer().frame(width: 4)
+            }
+            
             // Icon
             ZStack {
-                Circle()
-                    .fill(Color(hex: habit.colorHex).opacity(0.2))
-                    .frame(width: 50, height: 50)
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color(hex: habit.colorHex).opacity(0.15))
+                    .frame(width: 48, height: 48)
                 Image(systemName: habit.icon)
                     .font(.title2)
                     .foregroundColor(Color(hex: habit.colorHex))
@@ -26,41 +38,56 @@ struct HabitCardView: View {
                 HStack(spacing: 4) {
                     Image(systemName: "flame.fill")
                         .font(.caption)
-                        .foregroundColor(habit.streakCount > 0 ? .orange : .gray)
+                        .foregroundColor(habit.streakCount > 0 ? Color.stitchPrimary : Color.gray)
                     Text("\(habit.streakCount) day streak")
                         .font(.caption)
-                        .foregroundColor(.gray)
+                        .foregroundColor(Color(hex: "#A1A1A1"))
                 }
             }
             
             Spacer()
             
-            // Complete Button
+            // Complete Toggle
             Button(action: {
                 toggleCompletion()
             }) {
                 ZStack {
                     Circle()
-                        .strokeBorder(isCompletedToday ? Color.orange : Color.gray.opacity(0.5), lineWidth: 2)
+                        .strokeBorder(isCompletedToday ? Color.stitchPrimary : Color.gray.opacity(0.2), lineWidth: 2)
                         .frame(width: 32, height: 32)
                     
                     if isCompletedToday {
                         Circle()
-                            .fill(Color.orange)
-                            .frame(width: 24, height: 24)
+                            .fill(Color.stitchGradient)
+                            .frame(width: 32, height: 32)
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(.black)
                     }
                 }
             }
         }
-        .padding()
-        .background(Color(white: 0.1))
-        .cornerRadius(20)
+        .padding(.trailing, 20)
+        .padding(.vertical, 16)
+        .background(
+            ZStack {
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color.stitchSurface)
+                
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(Color.white.opacity(0.1), lineWidth: 0.5)
+            }
+        )
+        .cornerRadius(16)
         .onAppear {
             checkCompletionStatus()
         }
     }
     
     private func toggleCompletion() {
+        let generator = UINotificationFeedbackGenerator()
+        generator.notificationOccurred(.success)
+        
         withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
             StreakManager.shared.toggleCompletion(for: habit, context: modelContext)
             isCompletedToday = StreakManager.shared.isCompletedToday(habit: habit)
@@ -71,9 +98,3 @@ struct HabitCardView: View {
         isCompletedToday = StreakManager.shared.isCompletedToday(habit: habit)
     }
 }
-
-#Preview {
-    HabitCardView(habit: Habit(title: "Read 10 Pages", icon: "book.fill", colorHex: "#32ADE6"))
-        .modelContainer(for: Habit.self, inMemory: true)
-}
-

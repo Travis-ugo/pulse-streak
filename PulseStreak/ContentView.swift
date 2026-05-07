@@ -12,46 +12,51 @@ struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var habits: [Habit]
     
-    @State private var showingAddHabit = false
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
+
+    init() {
+        let appearance = UITabBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = UIColor(Color.stitchBackground)
+        
+        UITabBar.appearance().standardAppearance = appearance
+        if #available(iOS 15.0, *) {
+            UITabBar.appearance().scrollEdgeAppearance = appearance
+        }
+    }
 
     var body: some View {
         if !hasCompletedOnboarding {
             OnboardingView()
         } else {
             TabView {
-                NavigationStack {
-                    DashboardView(habits: habits)
-                        .navigationTitle("PulseStreak 🔥")
-                        .toolbar {
-                            ToolbarItem(placement: .primaryAction) {
-                                Button(action: { showingAddHabit = true }) {
-                                    Image(systemName: "plus.circle.fill")
-                                        .foregroundColor(.orange)
-                                        .font(.title2)
-                                }
-                            }
-                        }
-                        .sheet(isPresented: $showingAddHabit) {
-                            HabitCreationView()
-                        }
-                }
-                .tabItem {
-                    Label("Home", systemImage: "flame.fill")
-                }
+                DashboardView(habits: habits)
+                    .tabItem {
+                        Label("Home", systemImage: "house")
+                    }
                 
-                Text("Calendar View")
+                CalendarView()
                     .tabItem {
                         Label("Calendar", systemImage: "calendar")
                     }
                 
-                Text("Stats View")
+                AnalyticsView()
                     .tabItem {
-                        Label("Analytics", systemImage: "chart.bar.fill")
+                        Label("Analytics", systemImage: "chart.line.uptrend.xyaxis")
+                    }
+                
+                AwardsView()
+                    .tabItem {
+                        Label("Awards", systemImage: "rosette")
+                    }
+                
+                Text("Settings")
+                    .tabItem {
+                        Label("Settings", systemImage: "gearshape")
                     }
             }
             .preferredColorScheme(.dark)
-            .tint(.orange)
+            .tint(Color.stitchPrimary)
         }
     }
 }
