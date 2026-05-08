@@ -98,3 +98,8 @@ struct EmberCardView: View {
         isCompletedToday = StreakManager.shared.isCompletedToday(habit: habit)
     }
 }
+
+#Preview {
+    EmberCardView(habit: Habit(title: "Preview", icon: "flame", colorHex: "#FF8C00"))
+        .modelContainer(for: Habit.self, inMemory: true)
+}

@@ -312,3 +312,7 @@ struct DashboardView: View {
         return days
     }
 }
+
+#Preview {
+    DashboardView(habits: [])
+}

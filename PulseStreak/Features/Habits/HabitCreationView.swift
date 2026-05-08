@@ -237,6 +237,11 @@ struct HabitCreationView: View {
         newHabit.repeatDays = Array(selectedDays)
         modelContext.insert(newHabit)
         try? modelContext.save()
+        
+        if dailyMotivation {
+            NotificationManager.shared.scheduleHabitReminder(for: title, time: reminderTime)
+        }
+        
         showSuccessScreen = true
     }
 }

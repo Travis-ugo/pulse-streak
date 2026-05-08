@@ -57,6 +57,9 @@ struct ContentView: View {
             }
             .preferredColorScheme(.dark)
             .tint(Color.stitchPrimary)
+            .onAppear {
+                NotificationManager.shared.requestAuthorization()
+            }
         }
     }
 }

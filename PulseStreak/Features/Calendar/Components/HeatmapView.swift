@@ -122,3 +122,7 @@ struct HeatmapCell: View {
         return .clear
     }
 }
+
+#Preview {
+    HeatmapView(habits: [])
+}
