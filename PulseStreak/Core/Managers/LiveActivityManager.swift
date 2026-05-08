@@ -14,11 +14,12 @@ class LiveActivityManager {
         
         let attributes = HabitAttributes(habitTitle: title, streakCount: streakCount)
         let initialContentState = HabitAttributes.ContentState(progressPercentage: 0.0, remainingTime: "10:00")
+        let initialContent = ActivityContent(state: initialContentState, staleDate: nil)
         
         do {
             let activity = try Activity<HabitAttributes>.request(
                 attributes: attributes,
-                contentState: initialContentState,
+                content: initialContent,
                 pushType: nil
             )
             print("Successfully started Live Activity: \(activity.id)")
@@ -31,9 +32,10 @@ class LiveActivityManager {
         guard let activity = Activity<HabitAttributes>.activities.first else { return }
         
         let updatedContentState = HabitAttributes.ContentState(progressPercentage: progress, remainingTime: timeRemaining)
+        let updatedContent = ActivityContent(state: updatedContentState, staleDate: nil)
         
         Task {
-            await activity.update(using: updatedContentState)
+            await activity.update(updatedContent)
         }
     }
     
@@ -41,7 +43,7 @@ class LiveActivityManager {
         guard let activity = Activity<HabitAttributes>.activities.first else { return }
         
         Task {
-            await activity.end(using: nil, dismissalPolicy: .immediate)
+            await activity.end(nil, dismissalPolicy: .immediate)
         }
     }
 }
