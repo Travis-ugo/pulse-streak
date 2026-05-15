@@ -13,6 +13,7 @@ struct ContentView: View {
     @Query private var habits: [Habit]
     
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
+    @ObservedObject private var authManager = AuthManager.shared
 
     init() {
         let appearance = UITabBarAppearance()
@@ -49,6 +50,17 @@ struct ContentView: View {
                     .tabItem {
                         Label("Awards", systemImage: "rosette")
                     }
+                
+                Group {
+                    if authManager.currentUser != nil {
+                        GroupListView()
+                    } else {
+                        LoginView()
+                    }
+                }
+                .tabItem {
+                    Label("Groups", systemImage: "person.2.fill")
+                }
                 
                 ProfileView()
                     .tabItem {
