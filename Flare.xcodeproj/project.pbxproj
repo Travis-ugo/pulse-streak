@@ -272,6 +272,13 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.flare.streak;
 				PRODUCT_NAME = Flare;
 				INFOPLIST_KEY_CFBundleDisplayName = Flare;
+				INFOPLIST_KEY_CFBundleURLTypes = (
+					{
+						CFBundleURLSchemes = (
+							"com.googleusercontent.apps.975810881842-3n76vbl7c9okd06vp48gu15s8oa64lu8",
+						);
+					},
+				);
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -317,6 +324,13 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.flare.streak;
 				PRODUCT_NAME = Flare;
 				INFOPLIST_KEY_CFBundleDisplayName = Flare;
+				INFOPLIST_KEY_CFBundleURLTypes = (
+					{
+						CFBundleURLSchemes = (
+							"com.googleusercontent.apps.975810881842-3n76vbl7c9okd06vp48gu15s8oa64lu8",
+						);
+					},
+				);
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
