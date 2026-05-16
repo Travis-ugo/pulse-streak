@@ -49,12 +49,31 @@ class StreakManager {
                 }
                 
                 if streakBroken {
-                    habit.streakCount = 0
+                    // Check for Streak Freeze
+                    if let stats = fetchUserStats(context: context), stats.streakFreezes > 0 {
+                        stats.streakFreezes -= 1
+                        
+                        // Add a "frozen" completion for yesterday to protect the streak
+                        let yesterday = calendar.date(byAdding: .day, value: -1, to: endOfToday)!
+                        let freezeCompletion = Completion(completedAt: yesterday, status: "frozen")
+                        context.insert(freezeCompletion)
+                        habit.completionHistory?.append(freezeCompletion)
+                        
+                        // Notify user (could be via a notification or local property)
+                        print("Streak Freeze consumed for \(habit.title)!")
+                    } else {
+                        habit.streakCount = 0
+                    }
                 }
             }
         }
         try? context.save()
         UserStatsManager.shared.recalculateMomentum(context: context)
+    }
+    
+    private func fetchUserStats(context: ModelContext) -> UserStats? {
+        let descriptor = FetchDescriptor<UserStats>()
+        return try? context.fetch(descriptor).first
     }
     
     func toggleCompletion(for habit: Habit, context: ModelContext) {

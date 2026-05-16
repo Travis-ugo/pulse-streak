@@ -56,7 +56,7 @@ struct GroupListView: View {
                                         .padding(.horizontal)
                                     
                                     ForEach(groupManager.groups) { group in
-                                        NavigationLink(destination: GroupDetailView(group: group)) {
+                                        NavigationLink(destination: GroupDetailView(groupId: group.id)) {
                                             GroupCard(group: group)
                                         }
                                     }

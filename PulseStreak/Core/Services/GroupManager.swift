@@ -15,12 +15,16 @@ class GroupManager: ObservableObject {
     private init() {}
     
     func startListening(userId: String) {
+        guard groupsListener == nil else { return }
+        
         // Listen for groups where user is a member
         groupsListener = db.collection("groups")
             .whereField("memberIds", arrayContains: userId)
             .addSnapshotListener { snapshot, error in
                 guard let documents = snapshot?.documents else { return }
-                self.groups = documents.compactMap { try? $0.data(as: StreakGroup.self) }
+                let fetchedGroups = documents.compactMap { try? $0.data(as: StreakGroup.self) }
+                self.groups = fetchedGroups
+                self.evaluateGroupStreaks(fetchedGroups)
             }
         
         // Listen for invites for user's email
@@ -32,6 +36,26 @@ class GroupManager: ObservableObject {
                     guard let documents = snapshot?.documents else { return }
                     self.pendingInvites = documents.compactMap { try? $0.data(as: GroupInvite.self) }
                 }
+        }
+    }
+    
+    private func evaluateGroupStreaks(_ groups: [StreakGroup]) {
+        let today = Calendar.current.startOfDay(for: Date())
+        let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: today)!
+        
+        for group in groups {
+            guard group.streakCount > 0 else { continue }
+            
+            // If the last update was before yesterday, and it wasn't updated today, the streak is broken
+            let lastUpdate = group.lastStreakUpdate ?? Date.distantPast
+            if !Calendar.current.isDate(lastUpdate, inSameDayAs: today) && 
+               !Calendar.current.isDate(lastUpdate, inSameDayAs: yesterday) {
+                
+                // Reset streak in Firestore
+                db.collection("groups").document(group.id).updateData([
+                    "streakCount": 0
+                ])
+            }
         }
     }
     

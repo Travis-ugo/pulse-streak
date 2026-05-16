@@ -10,10 +10,26 @@ class AuthManager: ObservableObject {
     @Published var isLoading = true
     
     private var authListener: AuthStateDidChangeListenerHandle?
+    @Published var userCache: [String: User] = [:]
     private let db = Firestore.firestore()
     
     private init() {
         listenToAuthState()
+    }
+    
+    func fetchUser(by id: String) async -> User? {
+        if let cached = userCache[id] { return cached }
+        
+        do {
+            let snapshot = try await db.collection("users").document(id).getDocument()
+            if let user = try? snapshot.data(as: User.self) {
+                userCache[id] = user
+                return user
+            }
+        } catch {
+            print("Error fetching user \(id): \(error)")
+        }
+        return nil
     }
     
     func listenToAuthState() {
