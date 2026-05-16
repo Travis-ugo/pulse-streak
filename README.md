@@ -1,6 +1,6 @@
 <div align="center">
-  <img src="https://via.placeholder.com/150/000000/FF8C00?text=🔥" alt="PulseStreak Logo" width="120" height="120" style="border-radius: 30px;">
-  <h1>PulseStreak</h1>
+  <img src="https://via.placeholder.com/150/000000/FF8C00?text=🔥" alt="Flare Logo" width="120" height="120" style="border-radius: 30px;">
+  <h1>Flare</h1>
   <p><b>A modern streak-tracking and reminder iOS app designed to help you build momentum.</b></p>
   
   [![Swift](https://img.shields.io/badge/Swift-5.9-orange.svg?style=flat&logo=swift)](https://swift.org)
@@ -13,7 +13,7 @@
 
 ## 🌟 Overview
 
-**PulseStreak** isn't just another habit tracker. It is designed to foster **momentum, emotional engagement, and visual progress**. Whether you are trying to hit the gym, code daily, read more, or drink enough water, PulseStreak uses beautiful native animations and a rewarding streak system to keep you addicted to self-improvement.
+**Flare** isn't just another habit tracker. It is designed to foster **momentum, emotional engagement, and visual progress**. Whether you are trying to hit the gym, code daily, read more, or drink enough water, Flare uses beautiful native animations and a rewarding streak system to keep you addicted to self-improvement.
 
 Built natively for iOS with a focus on a **premium, minimal, and dark-mode-first** aesthetic.
 
@@ -29,7 +29,7 @@ Built natively for iOS with a focus on a **premium, minimal, and dark-mode-first
 
 ## 🛠 Tech Stack
 
-PulseStreak is built with modern iOS technologies to ensure high performance and seamless interactions:
+Flare is built with modern iOS technologies to ensure high performance and seamless interactions:
 
 * **UI Framework:** SwiftUI
 * **Architecture:** MVVM (Model-View-ViewModel)
@@ -51,12 +51,12 @@ Our design connects with the **Stitch Design Continuity** system, ensuring a sea
   * **Secondary:** Deep Black / Dark Gray (Immersive Canvas)
   * **Accent:** Electric Blue / Purple (Depth & Highlights)
 
-> *Read the full [Product Requirements Document (PRD)](PulseStreak_PRD.md) and [Style Guidelines](PulseStreak_Style_Guide.md) for deeper insights.*
+> *Read the full [Product Requirements Document (PRD)](Flare_PRD.md) and [Style Guidelines](Flare_Style_Guide.md) for deeper insights.*
 
 ## 📂 Project Structure
 
 ```text
-PulseStreak/
+Flare/
 ├── Models/        # Core data structures (Habit, Completion, UserStats)
 ├── Views/         # SwiftUI views (Home, Calendar, Stats, Settings)
 ├── ViewModels/    # State management and business logic
@@ -65,7 +65,7 @@ PulseStreak/
 ├── Components/    # Reusable UI elements (Buttons, Cards, Progress Rings)
 ├── Widgets/       # iOS Lock/Home Screen Widgets
 ├── Animations/    # Lottie files and custom SwiftUI transitions
-└── Resources/     # Assets, Fonts, and Localization strings
+├── Resources/     # Assets, Fonts, and Localization strings
 ```
 
 ## 🚀 Getting Started
@@ -77,4 +77,4 @@ PulseStreak/
 <div align="center">
   <i>"The goal is not just habit tracking. The goal is helping users build momentum and stay consistent long-term."</i>
 </div>
-# pulse-streak
+# flare
