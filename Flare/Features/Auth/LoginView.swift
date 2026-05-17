@@ -61,6 +61,28 @@ struct LoginView: View {
                 .padding(.horizontal)
                 .disabled(isLoading || email.isEmpty || password.isEmpty)
                 
+                HStack {
+                    Rectangle().frame(height: 1).foregroundColor(.gray.opacity(0.3))
+                    Text("OR").font(.caption2).foregroundColor(.gray)
+                    Rectangle().frame(height: 1).foregroundColor(.gray.opacity(0.3))
+                }
+                .padding(.horizontal)
+                
+                Button(action: handleGoogleSignIn) {
+                    HStack {
+                        Image(systemName: "g.circle.fill")
+                        Text("Continue with Google")
+                    }
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(Color.white.opacity(0.1))
+                    .cornerRadius(12)
+                }
+                .padding(.horizontal)
+                .disabled(isLoading)
+                
                 // Toggle Login/SignUp
                 Button(action: { isSignUp.toggle() }) {
                     Text(isSignUp ? "Already have an account? Sign In" : "Don't have an account? Sign Up")
@@ -116,6 +138,19 @@ struct LoginView: View {
                 if let err = err {
                     error = err.localizedDescription
                 }
+            }
+        }
+    private func handleGoogleSignIn() {
+        isLoading = true
+        error = nil
+        
+        Task {
+            do {
+                try await GoogleAuthService.shared.signInWithGoogle()
+                isLoading = false
+            } catch {
+                self.error = error.localizedDescription
+                isLoading = false
             }
         }
     }
