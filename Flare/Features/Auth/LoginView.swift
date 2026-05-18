@@ -140,6 +140,8 @@ struct LoginView: View {
                 }
             }
         }
+    }
+    
     private func handleGoogleSignIn() {
         isLoading = true
         error = nil

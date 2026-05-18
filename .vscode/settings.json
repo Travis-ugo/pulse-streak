@@ -1,0 +1,11 @@
+{
+  "swift.buildArguments": [
+    "-workspace",
+    "Flare.xcworkspace",
+    "-scheme",
+    "Flare"
+  ],
+  "sweetpad.workspacePath": "Flare.xcworkspace",
+  "sweetpad.scheme": "Flare",
+  "swift.backgroundCompilation": true
+}

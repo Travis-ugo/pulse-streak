@@ -1,0 +1,33 @@
+# Xcode build artifacts & Derived Data
+build/
+DerivedData/
+
+# User-specific settings & configurations (personal layout, breakpoints, etc.)
+*.xcuserdata
+xcuserdata/
+*.xcuserstate
+.preview
+
+# Swift Package Manager (if used)
+.build/
+.swiftpm/
+
+# CocoaPods
+# Ignoring the Pods directory (dependencies can be installed via 'pod install')
+Pods/
+
+# Fastlane (if used)
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/
+fastlane/test_output
+
+# macOS System Files
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+
+# Firebase (local CLI configurations, except firebase.json which is checked in)
+.firebase/
