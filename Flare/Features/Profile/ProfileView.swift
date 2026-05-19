@@ -4,9 +4,17 @@ import SwiftData
 struct ProfileView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var userStats: [UserStats]
+    @ObservedObject private var authManager = AuthManager.shared
     
     @State private var appleHealthEnabled = true
     @State private var selectedTheme = "EMBER"
+    
+    private var joinedDateString: String {
+        let date = authManager.currentUser?.joinedAt ?? Date()
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM yyyy"
+        return formatter.string(from: date).uppercased()
+    }
     
     private func addFreeze() {
         if let stats = userStats.first {
@@ -56,11 +64,11 @@ struct ProfileView: View {
                         .padding(.top, 24)
                         
                         VStack(spacing: 4) {
-                            Text("Alex Sterling")
+                            Text(authManager.currentUser?.displayName ?? authManager.currentUser?.email ?? "Guest User")
                                 .font(.system(size: 28, weight: .bold, design: .rounded))
                                 .foregroundColor(.white)
                             
-                            Text("EXPLORER • OCT 2023")
+                            Text("EXPLORER • \(joinedDateString)")
                                 .font(.system(size: 10, weight: .bold))
                                 .foregroundColor(Color(hex: "#A1A1A1"))
                                 .tracking(1.5)
@@ -274,7 +282,9 @@ struct ProfileView: View {
                     }
                     
                     // Logout
-                    Button(action: {}) {
+                    Button(action: {
+                        authManager.signOut()
+                    }) {
                         HStack(spacing: 12) {
                             Image(systemName: "rectangle.portrait.and.arrow.right")
                             Text("SECURE LOGOUT")

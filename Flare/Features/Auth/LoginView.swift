@@ -1,7 +1,9 @@
 import SwiftUI
 import FirebaseAuth
+import FirebaseFirestore
 
 struct LoginView: View {
+    @State private var name = ""
     @State private var email = ""
     @State private var password = ""
     @State private var isSignUp = false
@@ -19,18 +21,21 @@ struct LoginView: View {
                         .font(.system(size: 60))
                         .foregroundStyle(Color.stitchGradient)
                     
-                    Text("Flare")
+                    Text(isSignUp ? "Create Account" : "Welcome Back")
                         .font(.system(size: 32, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
                     
-                    Text(isSignUp ? "Create your account" : "Welcome back")
-                        .font(.subheadline)
+                    Text(isSignUp ? "Ignite your daily streaks and build habits today" : "Welcome back! Continue growing your ember streaks")
+                        .font(.system(size: 14, weight: .medium))
                         .foregroundColor(.gray)
                 }
                 .padding(.top, 40)
                 
                 // Inputs
                 VStack(spacing: 16) {
+                    if isSignUp {
+                        customTextField(placeholder: "Name", text: $name, icon: "person")
+                    }
                     customTextField(placeholder: "Email", text: $email, icon: "envelope")
                     customSecureField(placeholder: "Password", text: $password, icon: "lock")
                 }
@@ -59,7 +64,7 @@ struct LoginView: View {
                 .background(Color.stitchPrimary)
                 .cornerRadius(12)
                 .padding(.horizontal)
-                .disabled(isLoading || email.isEmpty || password.isEmpty)
+                .disabled(isLoading || email.isEmpty || password.isEmpty || (isSignUp && name.isEmpty))
                 
                 HStack {
                     Rectangle().frame(height: 1).foregroundColor(.gray.opacity(0.3))
@@ -84,10 +89,19 @@ struct LoginView: View {
                 .disabled(isLoading)
                 
                 // Toggle Login/SignUp
-                Button(action: { isSignUp.toggle() }) {
-                    Text(isSignUp ? "Already have an account? Sign In" : "Don't have an account? Sign Up")
-                        .font(.footnote)
-                        .foregroundColor(.stitchPrimary)
+                Button(action: {
+                    withAnimation {
+                        isSignUp.toggle()
+                    }
+                }) {
+                    HStack(spacing: 4) {
+                        Text(isSignUp ? "Already have an account?" : "Don't have an account?")
+                            .foregroundColor(Color(hex: "#A1A1A1"))
+                        Text(isSignUp ? "Sign In" : "Sign Up")
+                            .font(.system(.footnote, weight: .bold))
+                            .foregroundColor(.stitchPrimaryBright)
+                    }
+                    .font(.footnote)
                 }
             }
             .padding()
@@ -99,7 +113,7 @@ struct LoginView: View {
             Image(systemName: icon)
                 .foregroundColor(.gray)
                 .frame(width: 20)
-            TextField(placeholder, text: text)
+            TextField("", text: text, prompt: Text(placeholder).foregroundColor(Color.white.opacity(0.4)))
                 .textInputAutocapitalization(.none)
                 .foregroundColor(.white)
         }
@@ -113,12 +127,35 @@ struct LoginView: View {
             Image(systemName: icon)
                 .foregroundColor(.gray)
                 .frame(width: 20)
-            SecureField(placeholder, text: text)
+            SecureField("", text: text, prompt: Text(placeholder).foregroundColor(Color.white.opacity(0.4)))
                 .foregroundColor(.white)
         }
         .padding()
         .background(Color.stitchSurface)
         .cornerRadius(10)
+    }
+    
+    private func getFriendlyErrorMessage(_ errorMessage: String) -> String {
+        let lowercased = errorMessage.lowercased()
+        if lowercased.contains("keychain") {
+            return "Secure Storage Lock: The iOS Simulator's secure store is locked. Please try again or restart the simulator."
+        }
+        if lowercased.contains("email address is badly formatted") || lowercased.contains("invalid-email") || lowercased.contains("invalid email") {
+            return "Please enter a valid email address."
+        }
+        if lowercased.contains("email address is already in use") || lowercased.contains("email-already-in-use") {
+            return "This email is already registered. Try signing in instead!"
+        }
+        if lowercased.contains("password must be") || lowercased.contains("weak-password") || lowercased.contains("password is invalid") {
+            return "Password must be at least 6 characters long."
+        }
+        if lowercased.contains("no user record") || lowercased.contains("invalid-credential") || lowercased.contains("wrong-password") || lowercased.contains("wrong password") {
+            return "Incorrect email or password. Please try again."
+        }
+        if lowercased.contains("network") || lowercased.contains("connection lost") {
+            return "Network connection issue. Please check your internet connection."
+        }
+        return errorMessage
     }
     
     private func handleAuth() {
@@ -127,16 +164,44 @@ struct LoginView: View {
         
         if isSignUp {
             Auth.auth().createUser(withEmail: email, password: password) { result, err in
-                isLoading = false
                 if let err = err {
-                    error = err.localizedDescription
+                    isLoading = false
+                    error = getFriendlyErrorMessage(err.localizedDescription)
+                    return
+                }
+                
+                guard let user = result?.user else {
+                    isLoading = false
+                    return
+                }
+                
+                // Write user profile to Firestore immediately to avoid race conditions
+                let db = Firestore.firestore()
+                let newUser = User(
+                    id: user.uid,
+                    email: email,
+                    displayName: name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? (email.components(separatedBy: "@").first ?? "") : name,
+                    joinedAt: Date()
+                )
+                
+                do {
+                    try db.collection("users").document(user.uid).setData(from: newUser)
+                } catch {
+                    print("Error saving user to Firestore: \(error)")
+                }
+                
+                // Also update FirebaseAuth display name
+                let changeRequest = user.createProfileChangeRequest()
+                changeRequest.displayName = name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? (email.components(separatedBy: "@").first ?? "") : name
+                changeRequest.commitChanges { _ in
+                    isLoading = false
                 }
             }
         } else {
             Auth.auth().signIn(withEmail: email, password: password) { result, err in
                 isLoading = false
                 if let err = err {
-                    error = err.localizedDescription
+                    error = getFriendlyErrorMessage(err.localizedDescription)
                 }
             }
         }
@@ -151,7 +216,7 @@ struct LoginView: View {
                 try await GoogleAuthService.shared.signInWithGoogle()
                 isLoading = false
             } catch {
-                self.error = error.localizedDescription
+                self.error = getFriendlyErrorMessage(error.localizedDescription)
                 isLoading = false
             }
         }

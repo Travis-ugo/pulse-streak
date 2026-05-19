@@ -129,7 +129,7 @@ struct GroupCard: View {
                 Circle()
                     .fill(Color.stitchPrimary.opacity(0.2))
                     .frame(width: 50, height: 50)
-                Image(systemName: "person.2.fill")
+                Image(systemName: group.icon ?? "person.2.fill")
                     .foregroundColor(.stitchPrimary)
             }
             

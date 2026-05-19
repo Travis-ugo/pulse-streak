@@ -315,7 +315,7 @@ struct InviteView: View {
                     HStack {
                         Image(systemName: "envelope")
                             .foregroundColor(.gray)
-                        TextField("Friend's Email", text: $email)
+                        TextField("", text: $email, prompt: Text("Friend's Email").foregroundColor(Color.white.opacity(0.4)))
                             .textInputAutocapitalization(.none)
                             .foregroundColor(.white)
                     }

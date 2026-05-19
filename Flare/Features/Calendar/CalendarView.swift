@@ -2,13 +2,58 @@ import SwiftUI
 import SwiftData
 
 struct CalendarView: View {
+    @Binding var selectedTab: Int
     @Query private var habits: [Habit]
+    @State private var showingProfile = false
     @Query private var userStats: [UserStats]
     
-    // Static data for MVP layout
-    let totalHabitsCrushed = 428
-    let currentStreak = 24
-    let longestStreak = 112
+    private var totalHabitsCrushed: Int {
+        habits.flatMap { $0.completionHistory ?? [] }.count
+    }
+    
+    private var currentStreak: Int {
+        habits.map { $0.streakCount }.max() ?? 0
+    }
+    
+    private var longestStreak: Int {
+        habits.map { $0.longestStreak }.max() ?? 0
+    }
+    
+    private var initiateState: TimelineState {
+        if longestStreak >= 7 {
+            return longestStreak < 100 ? .active : .past
+        } else {
+            return .locked
+        }
+    }
+    
+    private var centurionState: TimelineState {
+        if longestStreak >= 100 {
+            return longestStreak < 365 ? .active : .past
+        } else {
+            return .locked
+        }
+    }
+    
+    private var masterState: TimelineState {
+        if longestStreak >= 365 {
+            return .active
+        } else {
+            return .locked
+        }
+    }
+    
+    private var initiateDate: String {
+        longestStreak >= 7 ? "Achieved" : "Locked"
+    }
+    
+    private var centurionDate: String {
+        longestStreak >= 100 ? "Achieved" : "Locked"
+    }
+    
+    private var masterDate: String {
+        longestStreak >= 365 ? "Achieved" : "Locked"
+    }
     
     var body: some View {
         ZStack {
@@ -19,12 +64,16 @@ struct CalendarView: View {
                     
                     // Header
                     HStack {
-                        ZStack {
-                            Circle()
-                                .fill(Color.stitchSurface)
-                                .frame(width: 36, height: 36)
-                            Image(systemName: "person.fill")
-                                .foregroundColor(.gray)
+                        Button(action: {
+                            showingProfile = true
+                        }) {
+                            ZStack {
+                                Circle()
+                                    .fill(Color.stitchSurface)
+                                    .frame(width: 36, height: 36)
+                                Image(systemName: "person.fill")
+                                    .foregroundColor(.gray)
+                            }
                         }
                         
                         Text("My Journey")
@@ -135,7 +184,7 @@ struct CalendarView: View {
                                     .foregroundColor(.white)
                             }
                             
-                            Text("Best: Oct 2023")
+                            Text(longestStreak == 0 ? "No streak yet" : "Personal Best")
                                 .font(.system(size: 14, weight: .medium))
                                 .foregroundColor(Color(hex: "#A1A1A1"))
                         }
@@ -164,26 +213,26 @@ struct CalendarView: View {
                         VStack(spacing: 0) {
                             TimelineNode(
                                 title: "EMBER INITIATE",
-                                date: "March 12",
+                                date: initiateDate,
                                 description: "Reached a 7-day perfect streak. The internal fire is starting to catch.",
                                 pills: ["MINDSET": Color.stitchSecondary, "CONSISTENCY": Color(hex: "#5C3A15")],
-                                state: .active
+                                state: initiateState
                             )
                             
                             TimelineNode(
                                 title: "STREAK CENTURION",
-                                date: "Feb 04",
+                                date: centurionDate,
                                 description: "Maintained momentum for 100 consecutive days of focused action.",
                                 pills: [:],
-                                state: .past
+                                state: centurionState
                             )
                             
                             TimelineNode(
                                 title: "PULSE MASTER",
-                                date: "Locked",
+                                date: masterDate,
                                 description: "Complete 365 days of streaks to reach ultimate mastery.",
                                 pills: [:],
-                                state: .locked
+                                state: masterState
                             )
                         }
                         .padding(.horizontal, 20)
@@ -191,6 +240,9 @@ struct CalendarView: View {
                     .padding(.bottom, 100)
                 }
                 .padding(.vertical)
+            }
+            .sheet(isPresented: $showingProfile) {
+                ProfileView()
             }
         }
     }
@@ -331,6 +383,6 @@ struct TimelineNode: View {
 }
 
 #Preview {
-    CalendarView()
+    CalendarView(selectedTab: .constant(1))
         .modelContainer(for: Habit.self, inMemory: true)
 }

@@ -11,6 +11,15 @@ struct CreateGroupView: View {
     @State private var inviteEmail = ""
     @State private var isLoading = false
     
+    @State private var selectedIcon = "person.2.fill"
+    @State private var reminderTime = Date()
+    @State private var dailyMotivation = true
+    
+    let icons = [
+        "person.2.fill", "flame.fill", "figure.strengthtraining.traditional", "book.fill",
+        "figure.mind.and.body", "moon.fill", "paintpalette.fill", "ellipsis"
+    ]
+    
     var body: some View {
         NavigationView {
             ZStack {
@@ -59,6 +68,88 @@ struct CreateGroupView: View {
                                     customTextField(placeholder: "e.g. 100 Pushups", text: $sharedTaskName, icon: "target")
                                 }
                             }
+                            
+                            // Choose Icon
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text("Choose Icon")
+                                    .font(.headline)
+                                    .foregroundColor(.white)
+                                
+                                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 4), spacing: 12) {
+                                    ForEach(icons, id: \.self) { icon in
+                                        Button(action: {
+                                            withAnimation { selectedIcon = icon }
+                                        }) {
+                                            ZStack {
+                                                if selectedIcon == icon {
+                                                    RoundedRectangle(cornerRadius: 12)
+                                                        .fill(Color.stitchGradient)
+                                                        .aspectRatio(1, contentMode: .fill)
+                                                } else {
+                                                    RoundedRectangle(cornerRadius: 12)
+                                                        .fill(Color(hex: "#1A1A1A"))
+                                                        .aspectRatio(1, contentMode: .fill)
+                                                }
+                                                
+                                                Image(systemName: icon)
+                                                    .font(.title2)
+                                                    .foregroundColor(selectedIcon == icon ? .black : .white)
+                                            }
+                                        }
+                                    }
+                                }
+                                .padding(16)
+                                .background(Color.stitchSurface)
+                                .cornerRadius(16)
+                            }
+                            
+                            // Reminder Time & Motivation
+                            VStack(alignment: .leading, spacing: 16) {
+                                Text("Reminder Time")
+                                    .font(.headline)
+                                    .foregroundColor(.white)
+                                
+                                HStack {
+                                    Spacer()
+                                    DatePicker("", selection: $reminderTime, displayedComponents: .hourAndMinute)
+                                        .datePickerStyle(.wheel)
+                                        .labelsHidden()
+                                        .colorScheme(.dark)
+                                    Spacer()
+                                }
+                                .padding(16)
+                                .background(Color.stitchSurface)
+                                .cornerRadius(16)
+                                
+                                // Group Notifications Toggle
+                                HStack(spacing: 16) {
+                                    ZStack {
+                                        Circle()
+                                            .fill(Color.stitchSecondary.opacity(0.2))
+                                            .frame(width: 40, height: 40)
+                                        Image(systemName: "bell.fill")
+                                            .foregroundColor(Color(hex: "#DCB8FF"))
+                                    }
+                                    
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("Daily Motivation")
+                                            .font(.system(size: 16, weight: .medium))
+                                            .foregroundColor(.white)
+                                        Text("Receive a shared streak reminder")
+                                            .font(.caption)
+                                            .foregroundColor(Color(hex: "#A1A1A1"))
+                                    }
+                                    
+                                    Spacer()
+                                    
+                                    Toggle("", isOn: $dailyMotivation)
+                                        .labelsHidden()
+                                        .tint(.stitchPrimary)
+                                }
+                                .padding(16)
+                                .background(Color.stitchSurface)
+                                .cornerRadius(16)
+                            }
                         }
                         .padding()
                     }
@@ -98,7 +189,7 @@ struct CreateGroupView: View {
             Image(systemName: icon)
                 .foregroundColor(.gray)
                 .frame(width: 20)
-            TextField(placeholder, text: text)
+            TextField("", text: text, prompt: Text(placeholder).foregroundColor(Color.white.opacity(0.4)))
                 .foregroundColor(.white)
         }
         .padding()
@@ -116,8 +207,13 @@ struct CreateGroupView: View {
                     name: groupName,
                     taskType: taskType,
                     sharedTaskName: taskType == .shared ? sharedTaskName : nil,
+                    icon: selectedIcon,
+                    reminderTime: reminderTime,
                     creator: user
                 )
+                if dailyMotivation {
+                    NotificationManager.shared.scheduleHabitReminder(for: groupName, time: reminderTime)
+                }
                 dismiss()
             } catch {
                 print("Error creating group: \(error)")

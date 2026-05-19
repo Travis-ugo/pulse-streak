@@ -3,11 +3,85 @@ import SwiftData
 
 struct DashboardView: View {
     var habits: [Habit]
+    @Binding var selectedTab: Int
     @Environment(\.modelContext) private var modelContext
     @Query private var userStats: [UserStats]
     
-    // Add state for creating a new habit
     @State private var showingAddHabit = false
+    @State private var showingProfile = false
+    @State private var showingCreateGroup = false
+    @ObservedObject var groupManager = GroupManager.shared
+    @ObservedObject var authManager = AuthManager.shared
+    
+    private var userGreetingName: String {
+        if let name = authManager.currentUser?.displayName, !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return name
+        }
+        if let email = authManager.currentUser?.email, !email.isEmpty {
+            return email.components(separatedBy: "@").first ?? "Explorer"
+        }
+        return "Explorer"
+    }
+    
+    private var greetingMessage: String {
+        let hour = Calendar.current.component(.hour, from: Date())
+        let timeGreeting: String
+        if hour < 12 {
+            timeGreeting = "Good Morning"
+        } else if hour < 17 {
+            timeGreeting = "Good Afternoon"
+        } else {
+            timeGreeting = "Good Evening"
+        }
+        return "\(timeGreeting), \(userGreetingName)"
+    }
+    
+    private var completionsCount: Int {
+        habits.flatMap { $0.completionHistory ?? [] }.count
+    }
+    
+    private var currentXP: Int {
+        completionsCount * 50
+    }
+    
+    private var currentLevel: Int {
+        (currentXP / 1000) + 1
+    }
+    
+    private var rankName: String {
+        switch currentLevel {
+        case 1:
+            return "Bronze Rank"
+        case 2...3:
+            return "Silver Rank"
+        case 4...5:
+            return "Gold Rank"
+        case 6...10:
+            return "Platinum Rank"
+        default:
+            return "Diamond Rank"
+        }
+    }
+    
+    private var consistencyScore: String {
+        guard !habits.isEmpty else { return "+0%" }
+        let calendar = Calendar.current
+        let sevenDaysAgo = calendar.date(byAdding: .day, value: -7, to: Date()) ?? Date()
+        
+        var totalCompleted = 0
+        for habit in habits {
+            if let history = habit.completionHistory {
+                let completedInRange = history.filter { $0.completedAt >= sevenDaysAgo }
+                totalCompleted += completedInRange.count
+            }
+        }
+        
+        let totalPossible = habits.count * 7
+        guard totalPossible > 0 else { return "+0%" }
+        
+        let percentage = (Double(totalCompleted) / Double(totalPossible)) * 100
+        return String(format: "+%.0f%%", percentage)
+    }
     
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
@@ -16,18 +90,20 @@ struct DashboardView: View {
                     
                     // 1. Custom Header
                     HStack {
-                        // Avatar placeholder
-                        ZStack {
-                            Circle()
-                                .fill(Color.stitchSurface)
-                                .frame(width: 36, height: 36)
-                            Image(systemName: "person.fill")
-                                .foregroundColor(.gray)
+                        // Avatar button
+                        Button(action: {
+                            showingProfile = true
+                        }) {
+                            ZStack {
+                                Circle()
+                                    .fill(Color.stitchSurface)
+                                    .frame(width: 36, height: 36)
+                                Text(authManager.currentUser?.initials ?? "U")
+                                    .font(.system(size: 14, weight: .bold))
+                                    .foregroundColor(.stitchPrimaryBright)
+                            }
+                            .overlay(Circle().stroke(Color.white.opacity(0.1), lineWidth: 0.5))
                         }
-                        
-                        Text("Flare")
-                            .font(.system(.headline, design: .rounded, weight: .bold))
-                            .foregroundColor(.stitchPrimary)
                         
                         Spacer()
                         
@@ -40,7 +116,7 @@ struct DashboardView: View {
                     
                     // 2. Greeting
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Good Evening, Travis")
+                        Text(greetingMessage)
                             .font(.system(size: 28, weight: .bold, design: .rounded))
                             .foregroundColor(.white)
                         
@@ -67,7 +143,7 @@ struct DashboardView: View {
                             
                             HStack {
                                 Image(systemName: "star.circle.fill")
-                                Text("Gold Rank")
+                                Text(rankName)
                             }
                             .font(.caption.bold())
                             .padding(.horizontal, 10)
@@ -136,7 +212,7 @@ struct DashboardView: View {
                                 Text("Consistency")
                                     .font(.caption)
                                     .foregroundColor(Color(hex: "#A1A1A1"))
-                                Text("+12%")
+                                Text(consistencyScore)
                                     .font(.system(.title2, design: .rounded, weight: .bold))
                                     .foregroundColor(.white)
                             }
@@ -184,6 +260,54 @@ struct DashboardView: View {
                             }
                         }
                         .padding(.horizontal, 20)
+                    }
+                    
+                    // Streak Groups Section
+                    HStack {
+                        Text("Streak Groups")
+                            .font(.title3.bold())
+                            .foregroundColor(.white)
+                        Spacer()
+                        Button(action: { showingCreateGroup = true }) {
+                            Image(systemName: "plus")
+                                .font(.caption.bold())
+                                .foregroundColor(.stitchPrimaryBright)
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 10)
+                    
+                    if groupManager.groups.isEmpty {
+                        VStack(spacing: 12) {
+                            Text("Better together. Start a shared journey.")
+                                .font(.subheadline)
+                                .foregroundColor(Color(hex: "#A1A1A1"))
+                                .multilineTextAlignment(.center)
+                            Button(action: { showingCreateGroup = true }) {
+                                Text("Create Group")
+                                    .font(.caption.bold())
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 8)
+                                    .background(Color.stitchPrimary)
+                                    .foregroundColor(.black)
+                                    .cornerRadius(12)
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(20)
+                        .background(Color.stitchSurface)
+                        .cornerRadius(16)
+                        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.white.opacity(0.1), lineWidth: 0.5))
+                        .padding(.horizontal, 20)
+                    } else {
+                        LazyVStack(spacing: 12) {
+                            ForEach(groupManager.groups) { group in
+                                NavigationLink(destination: GroupDetailView(groupId: group.id)) {
+                                    GroupCard(group: group)
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                            }
+                        }
                     }
                     
                     // 6. This Week Tracker
@@ -253,11 +377,20 @@ struct DashboardView: View {
             .sheet(isPresented: $showingAddHabit) {
                 HabitCreationView()
             }
+            .sheet(isPresented: $showingProfile) {
+                ProfileView()
+            }
+            .sheet(isPresented: $showingCreateGroup) {
+                CreateGroupView()
+            }
         }
         .background(Color.stitchBackground.edgesIgnoringSafeArea(.all))
         .onAppear {
             StreakManager.shared.evaluateStreaks(habits: habits, context: modelContext)
             UserStatsManager.shared.recalculateMomentum(context: modelContext)
+            if let userId = authManager.currentUser?.id {
+                groupManager.startListening(userId: userId)
+            }
         }
     }
     
@@ -314,5 +447,5 @@ struct DashboardView: View {
 }
 
 #Preview {
-    DashboardView(habits: [])
+    DashboardView(habits: [], selectedTab: .constant(0))
 }

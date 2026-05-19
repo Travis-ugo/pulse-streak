@@ -3,13 +3,7 @@ import SwiftData
 
 struct AwardsView: View {
     @Environment(\.modelContext) private var modelContext
-    
-    // We will use some placeholder data for the MVP layout.
-    // In a real app, this would be calculated from UserStats and Habit history.
-    let currentXP = 850
-    let nextXP = 1000
-    let unlockedCount = 12
-    let peakMomentum = 142
+    @Query private var habits: [Habit]
     
     struct Badge {
         let id = UUID()
@@ -20,14 +14,98 @@ struct AwardsView: View {
         let isUnlocked: Bool
     }
     
-    let badges = [
-        Badge(iconText: "7", iconName: nil, title: "7 Day Streak", subtitle: "Ignition phase complete", isUnlocked: true),
-        Badge(iconText: "30", iconName: nil, title: "30 Day Streak", subtitle: "Consistency master", isUnlocked: true),
-        Badge(iconText: "90", iconName: nil, title: "90 Day Streak", subtitle: "Habit hardened", isUnlocked: true),
-        Badge(iconText: "365", iconName: nil, title: "365 Day Streak", subtitle: "Locked", isUnlocked: false),
-        Badge(iconText: nil, iconName: "brain.head.profile", title: "Mind Palace", subtitle: "50 Meditations", isUnlocked: false),
-        Badge(iconText: nil, iconName: "dumbbell.fill", title: "Iron Will", subtitle: "200 Workouts", isUnlocked: false)
-    ]
+    private var completionsCount: Int {
+        habits.flatMap { $0.completionHistory ?? [] }.count
+    }
+    
+    private var currentXP: Int {
+        completionsCount * 50
+    }
+    
+    private var nextXP: Int {
+        let nextLevelXP = ((currentXP / 1000) + 1) * 1000
+        return nextLevelXP == 0 ? 1000 : nextLevelXP
+    }
+    
+    private var currentLevel: Int {
+        (currentXP / 1000) + 1
+    }
+    
+    private var peakMomentum: Int {
+        habits.map(\.longestStreak).max() ?? 0
+    }
+    
+    private var meditateCompletions: Int {
+        habits.filter { 
+            $0.title.localizedCaseInsensitiveContains("meditat") || 
+            $0.icon.localizedCaseInsensitiveContains("brain") 
+        }.flatMap { $0.completionHistory ?? [] }.count
+    }
+    
+    private var workoutCompletions: Int {
+        habits.filter { 
+            $0.title.localizedCaseInsensitiveContains("workout") || 
+            $0.title.localizedCaseInsensitiveContains("gym") || 
+            $0.icon.localizedCaseInsensitiveContains("dumbbell") 
+        }.flatMap { $0.completionHistory ?? [] }.count
+    }
+    
+    private var badges: [Badge] {
+        [
+            Badge(iconText: "7", iconName: nil, title: "7 Day Streak", 
+                  subtitle: habits.contains(where: { $0.longestStreak >= 7 }) ? "Ignition phase complete" : "Keep pushing!", 
+                  isUnlocked: habits.contains(where: { $0.longestStreak >= 7 })),
+            Badge(iconText: "30", iconName: nil, title: "30 Day Streak", 
+                  subtitle: habits.contains(where: { $0.longestStreak >= 30 }) ? "Consistency master" : "Locked", 
+                  isUnlocked: habits.contains(where: { $0.longestStreak >= 30 })),
+            Badge(iconText: "90", iconName: nil, title: "90 Day Streak", 
+                  subtitle: habits.contains(where: { $0.longestStreak >= 90 }) ? "Habit hardened" : "Locked", 
+                  isUnlocked: habits.contains(where: { $0.longestStreak >= 90 })),
+            Badge(iconText: "365", iconName: nil, title: "365 Day Streak", 
+                  subtitle: habits.contains(where: { $0.longestStreak >= 365 }) ? "Unstoppable force" : "Locked", 
+                  isUnlocked: habits.contains(where: { $0.longestStreak >= 365 })),
+            Badge(iconText: nil, iconName: "brain.head.profile", title: "Mind Palace", 
+                  subtitle: meditateCompletions >= 50 ? "50 Meditations" : "\(meditateCompletions)/50 Meditations", 
+                  isUnlocked: meditateCompletions >= 50),
+            Badge(iconText: nil, iconName: "dumbbell.fill", title: "Iron Will", 
+                  subtitle: workoutCompletions >= 200 ? "200 Workouts" : "\(workoutCompletions)/200 Workouts", 
+                  isUnlocked: workoutCompletions >= 200)
+        ]
+    }
+    
+    private var unlockedCount: Int {
+        badges.filter(\.isUnlocked).count
+    }
+    
+    private var rankName: String {
+        switch currentLevel {
+        case 1:
+            return "Bronze\nRank"
+        case 2...3:
+            return "Silver\nRank"
+        case 4...5:
+            return "Gold\nRank"
+        case 6...10:
+            return "Platinum\nRank"
+        default:
+            return "Diamond\nRank"
+        }
+    }
+    
+    private var nextRankName: String {
+        switch currentLevel {
+        case 1:
+            return "Next: Silver"
+        case 2...3:
+            return "Next: Gold"
+        case 4...5:
+            return "Next: Platinum"
+        case 6...10:
+            return "Next: Diamond"
+        default:
+            return "Max Rank"
+        }
+    }
     
     var body: some View {
         ZStack {
@@ -64,7 +142,7 @@ struct AwardsView: View {
                                     .foregroundColor(.stitchPrimary)
                                     .tracking(1.5)
                                 
-                                Text("Gold\nRank")
+                                Text(rankName)
                                     .font(.system(size: 40, weight: .bold, design: .rounded))
                                     .foregroundColor(.white)
                                     .lineSpacing(-4)
@@ -85,7 +163,7 @@ struct AwardsView: View {
                         
                         VStack(spacing: 8) {
                             HStack {
-                                Text("Next: Platinum")
+                                Text(nextRankName)
                                     .font(.system(size: 14, weight: .semibold))
                                     .foregroundColor(Color(hex: "#A1A1A1"))
                                 Spacer()
@@ -268,4 +346,5 @@ struct BadgeCard: View {
 
 #Preview {
     AwardsView()
+        .modelContainer(for: Habit.self, inMemory: true)
 }

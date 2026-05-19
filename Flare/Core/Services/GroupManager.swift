@@ -92,7 +92,7 @@ class GroupManager: ObservableObject {
         }
     }
     
-    func createGroup(name: String, taskType: GroupTaskType, sharedTaskName: String?, creator: User) async throws {
+    func createGroup(name: String, taskType: GroupTaskType, sharedTaskName: String?, icon: String, reminderTime: Date, creator: User) async throws {
         let groupId = UUID().uuidString
         let newGroup = StreakGroup(
             id: groupId,
@@ -104,7 +104,9 @@ class GroupManager: ObservableObject {
             streakCount: 0,
             lastStreakUpdate: nil,
             createdAt: Date(),
-            memberCompletions: [:]
+            memberCompletions: [:],
+            icon: icon,
+            reminderTime: reminderTime
         )
         
         try db.collection("groups").document(groupId).setData(from: newGroup)

@@ -14,6 +14,7 @@ struct ContentView: View {
     
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @ObservedObject private var authManager = AuthManager.shared
+    @State private var selectedTab = 0
 
     init() {
         let appearance = UITabBarAppearance()
@@ -29,43 +30,37 @@ struct ContentView: View {
     var body: some View {
         if !hasCompletedOnboarding {
             OnboardingView()
+        } else if authManager.currentUser == nil {
+            LoginView()
         } else {
-            TabView {
-                DashboardView(habits: habits)
-                    .tabItem {
-                        Label("Home", systemImage: "house")
-                    }
+            TabView(selection: $selectedTab) {
+                NavigationView {
+                    DashboardView(habits: habits, selectedTab: $selectedTab)
+                }
+                .tabItem {
+                    Label("Home", systemImage: "house")
+                }
+                .tag(0)
                 
-                CalendarView()
-                    .tabItem {
-                        Label("Calendar", systemImage: "calendar")
-                    }
+                NavigationView {
+                    CalendarView(selectedTab: $selectedTab)
+                }
+                .tabItem {
+                    Label("Calendar", systemImage: "calendar")
+                }
+                .tag(1)
                 
                 AnalyticsView()
                     .tabItem {
                         Label("Analytics", systemImage: "chart.line.uptrend.xyaxis")
                     }
+                    .tag(2)
                 
                 AwardsView()
                     .tabItem {
                         Label("Awards", systemImage: "rosette")
                     }
-                
-                Group {
-                    if authManager.currentUser != nil {
-                        GroupListView()
-                    } else {
-                        LoginView()
-                    }
-                }
-                .tabItem {
-                    Label("Groups", systemImage: "person.2.fill")
-                }
-                
-                ProfileView()
-                    .tabItem {
-                        Label("Profile", systemImage: "gearshape")
-                    }
+                    .tag(3)
             }
             .preferredColorScheme(.dark)
             .tint(Color.stitchPrimary)

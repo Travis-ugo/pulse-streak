@@ -58,7 +58,7 @@ struct HabitCreationView: View {
                                 Image(systemName: "square.and.pencil")
                                     .foregroundColor(.stitchPrimary)
                                 
-                                TextField("e.g. Morning Meditation", text: $title)
+                                TextField("", text: $title, prompt: Text("e.g. Morning Meditation").foregroundColor(Color.white.opacity(0.4)))
                                     .font(.system(size: 16))
                                     .foregroundColor(.white)
                                     .accentColor(.stitchPrimary)

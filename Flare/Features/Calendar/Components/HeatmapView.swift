@@ -75,15 +75,7 @@ struct HeatmapView: View {
             }
         }
         
-        // To make the MVP layout look beautiful, if we don't have real data, let's inject some fake data just to see the matrix light up.
-        // In a real app we'd remove this, but the screenshot shows a very populated matrix.
-        if habits.isEmpty {
-             for i in 0..<dates.count {
-                 if dates[i] <= today && Double.random(in: 0...1) > 0.4 {
-                     intensities[dates[i]] = Int.random(in: 1...4)
-                 }
-             }
-        }
+
         
         return (dates, intensities)
     }

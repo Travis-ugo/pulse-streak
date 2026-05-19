@@ -18,4 +18,8 @@ struct StreakGroup: Identifiable, Codable {
     
     // Member completion status for today: [UserId: CompletionDate]
     var memberCompletions: [String: Date]
+    
+    // Customization fields
+    var icon: String?
+    var reminderTime: Date?
 }
