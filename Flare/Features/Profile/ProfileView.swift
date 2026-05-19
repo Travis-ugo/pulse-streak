@@ -8,8 +8,10 @@ struct ProfileView: View {
     @Query private var userStats: [UserStats]
     @ObservedObject private var authManager = AuthManager.shared
     
-    @State private var appleHealthEnabled = true
-    @State private var selectedTheme = "EMBER"
+    @Query private var habits: [Habit]
+    
+    @AppStorage("appleHealthEnabled") private var appleHealthEnabled = true
+    @AppStorage("selectedTheme") private var selectedTheme = "EMBER"
     
     @State private var selectedItem: PhotosPickerItem? = nil
     @State private var isUploading = false
@@ -41,6 +43,27 @@ struct ProfileView: View {
         let formatter = DateFormatter()
         formatter.dateFormat = "MMM yyyy"
         return formatter.string(from: date).uppercased()
+    }
+    
+    private var completionsCount: Int {
+        habits.flatMap { $0.completionHistory ?? [] }.count
+    }
+    
+    private var currentXP: Int {
+        completionsCount * 50
+    }
+    
+    private var currentLevel: Int {
+        (currentXP / 1000) + 1
+    }
+    
+    private var rankName: String {
+        let level = currentLevel
+        if level >= 10 { return "DIAMOND" }
+        if level >= 7 { return "PLATINUM" }
+        if level >= 5 { return "GOLD" }
+        if level >= 3 { return "SILVER" }
+        return "BRONZE"
     }
     
     private func addFreeze() {
@@ -158,7 +181,7 @@ struct ProfileView: View {
                         }
                         
                         HStack(spacing: 12) {
-                            Text("PRO")
+                            Text("\(rankName) RANK")
                                 .font(.system(size: 10, weight: .bold))
                                 .foregroundColor(.stitchPrimary)
                                 .padding(.horizontal, 16)
@@ -166,7 +189,7 @@ struct ProfileView: View {
                                 .background(Color(hex: "#3A2000"))
                                 .cornerRadius(12)
                             
-                            Text("LEVEL 4")
+                            Text("LEVEL \(currentLevel)")
                                 .font(.system(size: 10, weight: .bold))
                                 .foregroundColor(Color(hex: "#DCB8FF"))
                                 .padding(.horizontal, 16)
@@ -346,7 +369,7 @@ struct ProfileView: View {
                             Divider().background(Color.white.opacity(0.05)).padding(.leading, 64)
                             
                             // Cloud Backup
-                            PreferenceRow(icon: "cloud", title: "Cloud Backup", subtitle: "SYNCED 2M AGO") {
+                            PreferenceRow(icon: "cloud", title: "Cloud Backup", subtitle: authManager.currentUser != nil ? "SYNCED TO CLOUD" : "LOCAL ONLY") {
                                 Image(systemName: "arrow.triangle.2.circlepath")
                                     .font(.system(size: 16))
                                     .foregroundColor(Color(hex: "#555555"))

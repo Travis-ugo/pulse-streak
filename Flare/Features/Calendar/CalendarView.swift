@@ -6,6 +6,29 @@ struct CalendarView: View {
     @Query private var habits: [Habit]
     @State private var showingProfile = false
     @Query private var userStats: [UserStats]
+    @ObservedObject private var authManager = AuthManager.shared
+    
+    private var profileUIImage: UIImage? {
+        guard let photoURL = authManager.currentUser?.photoURL else { return nil }
+        return loadImageFromBase64(photoURL)
+    }
+    
+    private func loadImageFromBase64(_ base64String: String) -> UIImage? {
+        let cleanString: String
+        if base64String.hasPrefix("data:image") {
+            let components = base64String.components(separatedBy: ",")
+            if components.count > 1 {
+                cleanString = components[1]
+            } else {
+                return nil
+            }
+        } else {
+            cleanString = base64String
+        }
+        
+        guard let data = Data(base64Encoded: cleanString) else { return nil }
+        return UIImage(data: data)
+    }
     
     private var totalHabitsCrushed: Int {
         habits.flatMap { $0.completionHistory ?? [] }.count
@@ -17,6 +40,22 @@ struct CalendarView: View {
     
     private var longestStreak: Int {
         habits.map { $0.longestStreak }.max() ?? 0
+    }
+    
+    private var currentStreakStatus: String {
+        if currentStreak == 0 {
+            return "Start your streak!"
+        } else if currentStreak >= 30 {
+            return "Elite Status 🔥"
+        } else if currentStreak >= 15 {
+            return "Unstoppable ⚡️"
+        } else if currentStreak >= 7 {
+            return "Consistency Master 🌟"
+        } else if currentStreak >= 3 {
+            return "Active Momentum ✨"
+        } else {
+            return "Keep the flame alive!"
+        }
     }
     
     private var initiateState: TimelineState {
@@ -44,15 +83,15 @@ struct CalendarView: View {
     }
     
     private var initiateDate: String {
-        longestStreak >= 7 ? "Achieved" : "Locked"
+        longestStreak >= 7 ? "ACHIEVED" : "\(longestStreak)/7 DAYS"
     }
     
     private var centurionDate: String {
-        longestStreak >= 100 ? "Achieved" : "Locked"
+        longestStreak >= 100 ? "ACHIEVED" : "\(longestStreak)/100 DAYS"
     }
     
     private var masterDate: String {
-        longestStreak >= 365 ? "Achieved" : "Locked"
+        longestStreak >= 365 ? "ACHIEVED" : "\(longestStreak)/365 DAYS"
     }
     
     var body: some View {
@@ -71,9 +110,20 @@ struct CalendarView: View {
                                 Circle()
                                     .fill(Color.stitchSurface)
                                     .frame(width: 36, height: 36)
-                                Image(systemName: "person.fill")
-                                    .foregroundColor(.gray)
+                                
+                                if let uiImage = profileUIImage {
+                                    Image(uiImage: uiImage)
+                                        .resizable()
+                                        .scaledToFill()
+                                        .frame(width: 36, height: 36)
+                                        .clipShape(Circle())
+                                } else {
+                                    Text(authManager.currentUser?.initials ?? "U")
+                                        .font(.system(size: 14, weight: .bold))
+                                        .foregroundColor(.stitchPrimaryBright)
+                                }
                             }
+                            .overlay(Circle().stroke(Color.white.opacity(0.1), lineWidth: 0.5))
                         }
                         
                         Text("My Journey")
@@ -158,7 +208,7 @@ struct CalendarView: View {
                                     .foregroundStyle(Color.stitchGradient)
                             }
                             
-                            Text("Top 5% of Users")
+                            Text(currentStreakStatus)
                                 .font(.system(size: 14, weight: .medium))
                                 .foregroundColor(.stitchPrimary)
                         }
