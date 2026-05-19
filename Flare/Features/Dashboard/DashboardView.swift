@@ -13,6 +13,28 @@ struct DashboardView: View {
     @ObservedObject var groupManager = GroupManager.shared
     @ObservedObject var authManager = AuthManager.shared
     
+    private var profileUIImage: UIImage? {
+        guard let photoURL = authManager.currentUser?.photoURL else { return nil }
+        return loadImageFromBase64(photoURL)
+    }
+    
+    private func loadImageFromBase64(_ base64String: String) -> UIImage? {
+        let cleanString: String
+        if base64String.hasPrefix("data:image") {
+            let components = base64String.components(separatedBy: ",")
+            if components.count > 1 {
+                cleanString = components[1]
+            } else {
+                return nil
+            }
+        } else {
+            cleanString = base64String
+        }
+        
+        guard let data = Data(base64Encoded: cleanString) else { return nil }
+        return UIImage(data: data)
+    }
+    
     private var userGreetingName: String {
         if let name = authManager.currentUser?.displayName, !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             return name
@@ -98,9 +120,18 @@ struct DashboardView: View {
                                 Circle()
                                     .fill(Color.stitchSurface)
                                     .frame(width: 36, height: 36)
-                                Text(authManager.currentUser?.initials ?? "U")
-                                    .font(.system(size: 14, weight: .bold))
-                                    .foregroundColor(.stitchPrimaryBright)
+                                
+                                if let uiImage = profileUIImage {
+                                    Image(uiImage: uiImage)
+                                        .resizable()
+                                        .scaledToFill()
+                                        .frame(width: 36, height: 36)
+                                        .clipShape(Circle())
+                                } else {
+                                    Text(authManager.currentUser?.initials ?? "U")
+                                        .font(.system(size: 14, weight: .bold))
+                                        .foregroundColor(.stitchPrimaryBright)
+                                }
                             }
                             .overlay(Circle().stroke(Color.white.opacity(0.1), lineWidth: 0.5))
                         }

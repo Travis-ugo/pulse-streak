@@ -79,5 +79,23 @@ class AuthManager: ObservableObject {
             print("Error signing out: \(error)")
         }
     }
+    
+    func updateProfilePhoto(to dataURL: String) async throws {
+        guard let uid = currentUser?.id else { return }
+        
+        let userRef = db.collection("users").document(uid)
+        try await userRef.updateData([
+            "photoURL": dataURL
+        ])
+        
+        if let firebaseUser = Auth.auth().currentUser {
+            let changeRequest = firebaseUser.createProfileChangeRequest()
+            changeRequest.photoURL = URL(string: dataURL)
+            try await changeRequest.commitChanges()
+        }
+        
+        // Update local state to trigger UI updates immediately
+        self.currentUser?.photoURL = dataURL
+    }
 }
 
