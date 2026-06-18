@@ -1,9 +1,8 @@
 import SwiftUI
-import SwiftData
 
 struct AwardsView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Query private var habits: [Habit]
+    @EnvironmentObject private var dataManager: DataManager
+    private var habits: [Habit] { dataManager.habits }
     @State private var showingProfile = false
     @ObservedObject private var authManager = AuthManager.shared
     
@@ -399,5 +398,5 @@ struct BadgeCard: View {
 
 #Preview {
     AwardsView()
-        .modelContainer(for: Habit.self, inMemory: true)
+        .environmentObject(DataManager.shared)
 }

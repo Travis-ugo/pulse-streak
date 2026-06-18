@@ -1,5 +1,4 @@
 import Foundation
-import SwiftData
 
 @MainActor
 class UserStatsManager {
@@ -7,9 +6,8 @@ class UserStatsManager {
     
     private init() {}
     
-    func recalculateMomentum(context: ModelContext) {
-        let descriptor = FetchDescriptor<Habit>()
-        guard let allHabits = try? context.fetch(descriptor) else { return }
+    func recalculateMomentum() {
+        let allHabits = DataManager.shared.habits
         
         var totalActiveStreaks = 0
         var totalCompletionsPastWeek = 0
@@ -29,20 +27,12 @@ class UserStatsManager {
         // Simple formula: each active streak point is 2 momentum, each recent completion is 5.
         let score = (totalActiveStreaks * 2) + (totalCompletionsPastWeek * 5)
         
-        let statsDescriptor = FetchDescriptor<UserStats>()
-        if let existingStats = try? context.fetch(statsDescriptor).first {
-            existingStats.momentumScore = score
-            existingStats.totalHabits = allHabits.count
-        } else {
-            let newStats = UserStats(
-                momentumScore: score, 
-                totalCompletions: totalCompletionsPastWeek, 
-                totalHabits: allHabits.count, 
-                longestGlobalStreak: totalActiveStreaks // simplified for now
-            )
-            context.insert(newStats)
-        }
+        let existingStats = DataManager.shared.userStats
+        existingStats.momentumScore = score
+        existingStats.totalHabits = allHabits.count
+        existingStats.totalCompletions = totalCompletionsPastWeek
+        existingStats.longestGlobalStreak = max(existingStats.longestGlobalStreak, totalActiveStreaks)
         
-        try? context.save()
+        DataManager.shared.saveUserStats()
     }
 }

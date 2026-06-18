@@ -1,4 +1,4 @@
-platform :ios, '17.0'
+platform :ios, '16.2'
 
 target 'Flare' do
   use_frameworks!

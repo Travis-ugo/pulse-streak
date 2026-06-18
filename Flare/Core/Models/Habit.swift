@@ -1,8 +1,6 @@
 import Foundation
-import SwiftData
 
-@Model
-final class Habit {
+final class Habit: Identifiable, Codable {
     var id: UUID
     var title: String
     var icon: String
@@ -11,10 +9,7 @@ final class Habit {
     var reminderTimes: [Date]
     var streakCount: Int
     var longestStreak: Int
-    
-    @Relationship(deleteRule: .cascade) 
     var completionHistory: [Completion]?
-    
     var createdAt: Date
 
     init(id: UUID = UUID(), 

@@ -1,11 +1,10 @@
 import SwiftUI
-import SwiftData
 
 struct CalendarView: View {
     @Binding var selectedTab: Int
-    @Query private var habits: [Habit]
+    @EnvironmentObject private var dataManager: DataManager
+    private var habits: [Habit] { dataManager.habits }
     @State private var showingProfile = false
-    @Query private var userStats: [UserStats]
     @ObservedObject private var authManager = AuthManager.shared
     
     private var profileUIImage: UIImage? {
@@ -434,5 +433,5 @@ struct TimelineNode: View {
 
 #Preview {
     CalendarView(selectedTab: .constant(1))
-        .modelContainer(for: Habit.self, inMemory: true)
+        .environmentObject(DataManager.shared)
 }

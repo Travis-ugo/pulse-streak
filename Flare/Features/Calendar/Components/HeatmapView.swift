@@ -1,5 +1,4 @@
 import SwiftUI
-import SwiftData
 
 struct HeatmapView: View {
     var habits: [Habit]

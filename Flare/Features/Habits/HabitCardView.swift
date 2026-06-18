@@ -1,8 +1,6 @@
 import SwiftUI
-import SwiftData
 struct HabitCardView: View {
     let habit: Habit
-    @Environment(\.modelContext) private var modelContext
     @State private var isCompletedToday: Bool = false
     @State private var showingShareSheet: Bool = false
     
@@ -77,7 +75,7 @@ struct HabitCardView: View {
     
     private func toggleCompletion() {
         withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
-            StreakManager.shared.toggleCompletion(for: habit, context: modelContext)
+            StreakManager.shared.toggleCompletion(for: habit)
             isCompletedToday = StreakManager.shared.isCompletedToday(habit: habit)
         }
     }
@@ -89,6 +87,6 @@ struct HabitCardView: View {
 
 #Preview {
     HabitCardView(habit: Habit(title: "Read 10 Pages", icon: "book.fill", colorHex: "#32ADE6"))
-        .modelContainer(for: Habit.self, inMemory: true)
+        .environmentObject(DataManager.shared)
 }
 

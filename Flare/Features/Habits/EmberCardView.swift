@@ -1,9 +1,7 @@
 import SwiftUI
-import SwiftData
 
 struct EmberCardView: View {
     let habit: Habit
-    @Environment(\.modelContext) private var modelContext
     @State private var isCompletedToday: Bool = false
     @State private var showingShareSheet: Bool = false
     
@@ -112,7 +110,7 @@ struct EmberCardView: View {
         generator.notificationOccurred(.success)
         
         withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
-            StreakManager.shared.toggleCompletion(for: habit, context: modelContext)
+            StreakManager.shared.toggleCompletion(for: habit)
             isCompletedToday = StreakManager.shared.isCompletedToday(habit: habit)
         }
     }
@@ -130,5 +128,5 @@ struct EmberCardView: View {
 
 #Preview {
     EmberCardView(habit: Habit(title: "Preview", icon: "flame", colorHex: "#FF8C00"))
-        .modelContainer(for: Habit.self, inMemory: true)
+        .environmentObject(DataManager.shared)
 }

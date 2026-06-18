@@ -1,14 +1,10 @@
 import SwiftUI
-import SwiftData
 import PhotosUI
 import FirebaseFirestore
 
 struct ProfileView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Query private var userStats: [UserStats]
+    @EnvironmentObject private var dataManager: DataManager
     @ObservedObject private var authManager = AuthManager.shared
-    
-    @Query private var habits: [Habit]
     
     @AppStorage("appleHealthEnabled") private var appleHealthEnabled = true
     @AppStorage("selectedTheme") private var selectedTheme = "EMBER"
@@ -46,7 +42,7 @@ struct ProfileView: View {
     }
     
     private var completionsCount: Int {
-        habits.flatMap { $0.completionHistory ?? [] }.count
+        dataManager.habits.flatMap { $0.completionHistory ?? [] }.count
     }
     
     private var currentXP: Int {
@@ -67,13 +63,8 @@ struct ProfileView: View {
     }
     
     private func addFreeze() {
-        if let stats = userStats.first {
-            stats.streakFreezes += 1
-        } else {
-            let newStats = UserStats(streakFreezes: 1)
-            modelContext.insert(newStats)
-        }
-        try? modelContext.save()
+        dataManager.userStats.streakFreezes += 1
+        dataManager.saveUserStats()
     }
     
     var body: some View {
@@ -141,7 +132,7 @@ struct ProfileView: View {
                         }
                         .disabled(isUploading)
                         .padding(.top, 24)
-                        .onChange(of: selectedItem) { _, newItem in
+                        .onChange(of: selectedItem) { newItem in
                             guard let newItem = newItem else { return }
                             isUploading = true
                             Task {
@@ -225,7 +216,7 @@ struct ProfileView: View {
                                 Image(systemName: "snowflake")
                                     .font(.system(size: 12))
                                     .foregroundColor(.stitchPrimary)
-                                Text("\(userStats.first?.streakFreezes ?? 0)")
+                                Text("\(dataManager.userStats.streakFreezes)")
                                     .font(.system(size: 14, weight: .bold, design: .rounded))
                                     .foregroundColor(.white)
                             }
@@ -481,4 +472,5 @@ struct ThemeSwatch: View {
 
 #Preview {
     ProfileView()
+        .environmentObject(DataManager.shared)
 }

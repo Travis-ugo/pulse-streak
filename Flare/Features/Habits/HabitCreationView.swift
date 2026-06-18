@@ -1,8 +1,7 @@
 import SwiftUI
-import SwiftData
 
 struct HabitCreationView: View {
-    @Environment(\.modelContext) private var modelContext
+    @EnvironmentObject private var dataManager: DataManager
     @Environment(\.dismiss) private var dismiss
     
     @State private var title = ""
@@ -235,8 +234,7 @@ struct HabitCreationView: View {
     private func saveHabit() {
         let newHabit = Habit(title: title, icon: selectedIcon, colorHex: "#FF8C00") // Enforce Amber design
         newHabit.repeatDays = Array(selectedDays)
-        modelContext.insert(newHabit)
-        try? modelContext.save()
+        dataManager.insert(newHabit)
         
         if dailyMotivation {
             NotificationManager.shared.scheduleHabitReminder(for: title, time: reminderTime)
@@ -248,5 +246,5 @@ struct HabitCreationView: View {
 
 #Preview {
     HabitCreationView()
-        .modelContainer(for: Habit.self, inMemory: true)
+        .environmentObject(DataManager.shared)
 }

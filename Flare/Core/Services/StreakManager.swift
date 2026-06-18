@@ -1,5 +1,4 @@
 import Foundation
-import SwiftData
 import SwiftUI
 
 @MainActor
@@ -9,13 +8,14 @@ class StreakManager {
     private init() {}
     
     // Evaluate if any streaks were broken due to missed days
-    func evaluateStreaks(habits: [Habit], context: ModelContext) {
+    func evaluateStreaks(habits: [Habit]) {
         let calendar = Calendar.current
         
         for habit in habits {
             guard habit.streakCount > 0 else { continue }
             guard let history = habit.completionHistory, !history.isEmpty else { 
                 habit.streakCount = 0
+                DataManager.shared.updateHabit(habit)
                 continue 
             }
             
@@ -23,6 +23,7 @@ class StreakManager {
             let sortedCompletions = history.sorted { $0.completedAt > $1.completedAt }
             guard let lastCompletion = sortedCompletions.first else {
                 habit.streakCount = 0
+                DataManager.shared.updateHabit(habit)
                 continue
             }
             
@@ -50,33 +51,34 @@ class StreakManager {
                 
                 if streakBroken {
                     // Check for Streak Freeze
-                    if let stats = fetchUserStats(context: context), stats.streakFreezes > 0 {
+                    let stats = DataManager.shared.userStats
+                    if stats.streakFreezes > 0 {
                         stats.streakFreezes -= 1
                         
                         // Add a "frozen" completion for yesterday to protect the streak
                         let yesterday = calendar.date(byAdding: .day, value: -1, to: endOfToday)!
                         let freezeCompletion = Completion(completedAt: yesterday, status: "frozen")
-                        context.insert(freezeCompletion)
+                        
+                        if habit.completionHistory == nil {
+                            habit.completionHistory = []
+                        }
                         habit.completionHistory?.append(freezeCompletion)
+                        DataManager.shared.updateHabit(habit)
                         
                         // Notify user (could be via a notification or local property)
                         print("Streak Freeze consumed for \(habit.title)!")
                     } else {
                         habit.streakCount = 0
+                        DataManager.shared.updateHabit(habit)
                     }
                 }
             }
         }
-        try? context.save()
-        UserStatsManager.shared.recalculateMomentum(context: context)
+        DataManager.shared.save()
+        UserStatsManager.shared.recalculateMomentum()
     }
     
-    private func fetchUserStats(context: ModelContext) -> UserStats? {
-        let descriptor = FetchDescriptor<UserStats>()
-        return try? context.fetch(descriptor).first
-    }
-    
-    func toggleCompletion(for habit: Habit, context: ModelContext) {
+    func toggleCompletion(for habit: Habit) {
         let calendar = Calendar.current
         let today = Date()
         
@@ -89,7 +91,6 @@ class StreakManager {
         
         if let existingCompletion = todayCompletions.first {
             // Un-complete: Remove completion for today
-            context.delete(existingCompletion)
             if let index = habit.completionHistory?.firstIndex(where: { $0.id == existingCompletion.id }) {
                 habit.completionHistory?.remove(at: index)
             }
@@ -97,7 +98,6 @@ class StreakManager {
         } else {
             // Complete for today
             let completion = Completion(completedAt: today, status: "completed")
-            context.insert(completion)
             habit.completionHistory?.append(completion)
             
             habit.streakCount += 1
@@ -110,10 +110,11 @@ class StreakManager {
             impactMed.impactOccurred()
         }
         
-        try? context.save()
+        DataManager.shared.updateHabit(habit)
+        DataManager.shared.save()
         
         // Notify stats manager to update momentum
-        UserStatsManager.shared.recalculateMomentum(context: context)
+        UserStatsManager.shared.recalculateMomentum()
     }
     
     func isCompletedToday(habit: Habit) -> Bool {

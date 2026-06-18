@@ -1,16 +1,7 @@
-//
-//  ContentView.swift
-//  Flare
-//
-//  Created by Travis Okonicha on 07/05/2026.
-//
-
 import SwiftUI
-import SwiftData
 
 struct ContentView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Query private var habits: [Habit]
+    @EnvironmentObject private var dataManager: DataManager
     
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @ObservedObject private var authManager = AuthManager.shared
@@ -35,7 +26,7 @@ struct ContentView: View {
         } else {
             TabView(selection: $selectedTab) {
                 NavigationView {
-                    DashboardView(habits: habits, selectedTab: $selectedTab)
+                    DashboardView(habits: dataManager.habits, selectedTab: $selectedTab)
                 }
                 .tabItem {
                     Label("Home", systemImage: "house")
@@ -73,5 +64,5 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
-        .modelContainer(for: Habit.self, inMemory: true)
+        .environmentObject(DataManager.shared)
 }

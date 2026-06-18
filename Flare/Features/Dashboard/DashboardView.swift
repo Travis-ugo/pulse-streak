@@ -1,11 +1,9 @@
 import SwiftUI
-import SwiftData
 
 struct DashboardView: View {
     var habits: [Habit]
     @Binding var selectedTab: Int
-    @Environment(\.modelContext) private var modelContext
-    @Query private var userStats: [UserStats]
+    @EnvironmentObject private var dataManager: DataManager
     
     @State private var showingAddHabit = false
     @State private var showingProfile = false
@@ -221,7 +219,7 @@ struct DashboardView: View {
                                 Text("Power Score")
                                     .font(.caption)
                                     .foregroundColor(Color(hex: "#A1A1A1"))
-                                Text("\(userStats.first?.momentumScore ?? 0)")
+                                Text("\(dataManager.userStats.momentumScore)")
                                     .font(.system(.title2, design: .rounded, weight: .bold))
                                     .foregroundColor(.white)
                             }
@@ -417,8 +415,8 @@ struct DashboardView: View {
         }
         .background(Color.stitchBackground.edgesIgnoringSafeArea(.all))
         .onAppear {
-            StreakManager.shared.evaluateStreaks(habits: habits, context: modelContext)
-            UserStatsManager.shared.recalculateMomentum(context: modelContext)
+            StreakManager.shared.evaluateStreaks(habits: habits)
+            UserStatsManager.shared.recalculateMomentum()
             if let userId = authManager.currentUser?.id {
                 groupManager.startListening(userId: userId)
             }
@@ -479,4 +477,5 @@ struct DashboardView: View {
 
 #Preview {
     DashboardView(habits: [], selectedTab: .constant(0))
+        .environmentObject(DataManager.shared)
 }
