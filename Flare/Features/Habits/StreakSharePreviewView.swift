@@ -70,18 +70,48 @@ struct StreakSharePreviewView: View {
                     
                     Spacer()
                     
-                    // Share Button
-                    Button(action: handleShare) {
-                        HStack {
-                            Image(systemName: "square.and.arrow.up")
-                            Text("Share to Socials")
+                    // Share Buttons
+                    VStack(spacing: 12) {
+                        Button(action: handleInstagramShare) {
+                            HStack {
+                                Image(systemName: "camera.fill")
+                                Text("Share to Instagram Stories")
+                            }
+                            .font(.system(.headline, design: .rounded, weight: .bold))
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(
+                                LinearGradient(
+                                    gradient: Gradient(colors: [
+                                        Color(hex: "#F58529"),
+                                        Color(hex: "#DD2A7B"),
+                                        Color(hex: "#8134AF"),
+                                        Color(hex: "#515BD4")
+                                    ]),
+                                    startPoint: .bottomLeading,
+                                    endPoint: .topTrailing
+                                )
+                            )
+                            .cornerRadius(12)
                         }
-                        .font(.headline)
-                        .foregroundColor(.black)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(Color.white)
-                        .cornerRadius(12)
+                        
+                        Button(action: handleSystemShare) {
+                            HStack {
+                                Image(systemName: "square.and.arrow.up")
+                                Text("More Share Options")
+                            }
+                            .font(.system(.headline, design: .rounded, weight: .semibold))
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(Color.white.opacity(0.08))
+                            .cornerRadius(12)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                            )
+                        }
                     }
                     .padding(.horizontal, 40)
                     .padding(.bottom, 20)
@@ -98,10 +128,15 @@ struct StreakSharePreviewView: View {
         }
     }
     
-    private func handleShare() {
-        // We pass the color back to the service
-        // Since selectedColor is a Color object, we can convert it back to hex or pass it directly
-        // For simplicity, let's update ShareService to accept a Color object
+    private func handleInstagramShare() {
+        ShareService.shared.shareToInstagramStories(
+            habitName: habitName,
+            streakCount: streakCount,
+            color: selectedColor
+        )
+    }
+    
+    private func handleSystemShare() {
         ShareService.shared.shareStreak(
             habitName: habitName,
             streakCount: streakCount,

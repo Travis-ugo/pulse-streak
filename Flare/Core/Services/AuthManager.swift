@@ -94,8 +94,9 @@ class AuthManager: ObservableObject {
             try await changeRequest.commitChanges()
         }
         
-        // Update local state to trigger UI updates immediately
+        // Update local state and notify observers to trigger UI updates immediately
         self.currentUser?.photoURL = dataURL
+        self.objectWillChange.send()
     }
 }
 

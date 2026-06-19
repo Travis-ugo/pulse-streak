@@ -7,15 +7,15 @@ struct FlickeringFlame: View {
     var body: some View {
         Image(systemName: "flame.fill")
             .foregroundStyle(color)
-            .scaleEffect(isFlickering ? 1.2 : 1.0)
-            .opacity(isFlickering ? 0.6 : 1.0)
+            .scaleEffect(isFlickering ? 1.15 : 1.0)
+            .opacity(isFlickering ? 0.7 : 1.0)
+            .animation(
+                .easeInOut(duration: 0.6)
+                .repeatForever(autoreverses: true),
+                value: isFlickering
+            )
             .onAppear {
-                withAnimation(
-                    Animation.easeInOut(duration: 0.15)
-                        .repeatForever(autoreverses: true)
-                ) {
-                    isFlickering = true
-                }
+                isFlickering = true
             }
     }
 }

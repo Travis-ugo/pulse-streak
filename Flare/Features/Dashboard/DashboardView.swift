@@ -5,6 +5,7 @@ struct DashboardView: View {
     @Binding var selectedTab: Int
     @EnvironmentObject private var dataManager: DataManager
     
+    @AppStorage("selectedTheme") private var selectedTheme = "EMBER"
     @State private var showingAddHabit = false
     @State private var showingProfile = false
     @State private var showingCreateGroup = false

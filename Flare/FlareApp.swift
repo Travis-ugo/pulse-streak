@@ -1,5 +1,6 @@
 import SwiftUI
 import FirebaseCore
+import GoogleSignIn
 
 @main
 struct FlareApp: App {
@@ -11,6 +12,9 @@ struct FlareApp: App {
         WindowGroup {
             ContentView()
                 .environmentObject(DataManager.shared)
+                .onOpenURL { url in
+                    GIDSignIn.sharedInstance.handle(url)
+                }
         }
     }
 }

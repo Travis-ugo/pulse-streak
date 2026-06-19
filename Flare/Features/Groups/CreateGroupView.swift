@@ -4,6 +4,7 @@ struct CreateGroupView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var groupManager = GroupManager.shared
     @ObservedObject var authManager = AuthManager.shared
+    @AppStorage("selectedTheme") private var selectedTheme = "EMBER"
     
     @State private var groupName = ""
     @State private var taskType: GroupTaskType = .shared
@@ -43,19 +44,49 @@ struct CreateGroupView: View {
                                     .font(.headline)
                                     .foregroundColor(.white)
                                 
-                                Picker("Goal Type", selection: $taskType) {
+                                HStack(spacing: 16) {
                                     ForEach(GroupTaskType.allCases, id: \.self) { type in
-                                        Text(type.rawValue).tag(type)
+                                        Button(action: {
+                                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                                taskType = type
+                                            }
+                                        }) {
+                                            VStack(spacing: 12) {
+                                                Image(systemName: type == .shared ? "person.3.sequence.fill" : "person.fill")
+                                                    .font(.title2)
+                                                    .foregroundColor(taskType == type ? .black : .stitchPrimary)
+                                                
+                                                Text(type.rawValue)
+                                                    .font(.system(size: 14, weight: .bold, design: .rounded))
+                                                    .foregroundColor(taskType == type ? .black : .white)
+                                            }
+                                            .frame(maxWidth: .infinity)
+                                            .padding(.vertical, 20)
+                                            .background(
+                                                Group {
+                                                    if taskType == type {
+                                                        Color.stitchGradient
+                                                    } else {
+                                                        Color.stitchSurface
+                                                    }
+                                                }
+                                            )
+                                            .cornerRadius(16)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 16)
+                                                    .stroke(taskType == type ? Color.clear : Color.white.opacity(0.1), lineWidth: 1)
+                                            )
+                                            .shadow(color: taskType == type ? Color.stitchPrimary.opacity(0.3) : .clear, radius: 10, x: 0, y: 5)
+                                        }
                                     }
                                 }
-                                .pickerStyle(.segmented)
-                                .colorMultiply(.stitchPrimary)
                                 
                                 Text(taskType == .shared ? 
-                                     "Everyone works towards a single group goal." : 
-                                     "Everyone works towards their own personal habit.")
+                                     "Shared Goal: Everyone works together to grow a single shared fire streak!" : 
+                                     "Individual Goals: Members keep their own personal habits, and nudge each other to complete them.")
                                     .font(.caption)
                                     .foregroundColor(.gray)
+                                    .lineSpacing(2)
                                     .padding(.top, 4)
                             }
                             
@@ -221,4 +252,8 @@ struct CreateGroupView: View {
             }
         }
     }
+}
+
+#Preview {
+    CreateGroupView()
 }

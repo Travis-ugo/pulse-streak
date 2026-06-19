@@ -4,6 +4,7 @@ struct ContentView: View {
     @EnvironmentObject private var dataManager: DataManager
     
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
+    @AppStorage("selectedTheme") private var selectedTheme = "EMBER"
     @ObservedObject private var authManager = AuthManager.shared
     @State private var selectedTab = 0
 
@@ -19,7 +20,13 @@ struct ContentView: View {
     }
 
     var body: some View {
-        if !hasCompletedOnboarding {
+        if authManager.isLoading {
+            ZStack {
+                Color.stitchBackground.edgesIgnoringSafeArea(.all)
+                ProgressView()
+                    .tint(Color.stitchPrimary)
+            }
+        } else if !hasCompletedOnboarding {
             OnboardingView()
         } else if authManager.currentUser == nil {
             LoginView()

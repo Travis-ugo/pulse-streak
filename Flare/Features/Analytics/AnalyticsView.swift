@@ -10,6 +10,9 @@ struct DailyCompletion: Identifiable {
 struct AnalyticsView: View {
     @EnvironmentObject private var dataManager: DataManager
     private var habits: [Habit] { dataManager.habits }
+    
+    @AppStorage("selectedTheme") private var selectedTheme = "EMBER"
+    @State private var selectedRange = 0 // 0 = Weekly, 1 = Monthly
     @State private var showingProfile = false
     @ObservedObject private var authManager = AuthManager.shared
     
@@ -83,12 +86,23 @@ struct AnalyticsView: View {
                     
                     // Chart Section
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("Last 7 Days")
-                            .font(.system(size: 18, weight: .bold, design: .rounded))
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 20)
+                        HStack {
+                            Text(selectedRange == 0 ? "Last 7 Days" : "Last 30 Days")
+                                .font(.system(size: 18, weight: .bold, design: .rounded))
+                                .foregroundColor(.white)
+                            
+                            Spacer()
+                            
+                            Picker("Range", selection: $selectedRange) {
+                                Text("Weekly").tag(0)
+                                Text("Monthly").tag(1)
+                            }
+                            .pickerStyle(.segmented)
+                            .frame(width: 140)
+                        }
+                        .padding(.horizontal, 20)
                         
-                        let chartData = calculate7DayData()
+                        let chartData = calculateChartData()
                         
                         Chart {
                             ForEach(chartData) { data in
@@ -97,13 +111,20 @@ struct AnalyticsView: View {
                                     y: .value("Completions", data.count)
                                 )
                                 .foregroundStyle(Color.stitchPrimary.gradient)
-                                .cornerRadius(4)
+                                .cornerRadius(selectedRange == 0 ? 4 : 2)
                             }
                         }
                         .chartXAxis {
-                            AxisMarks(values: .stride(by: .day)) { _ in
-                                AxisValueLabel(format: .dateTime.weekday(.abbreviated))
-                                    .foregroundStyle(Color.gray)
+                            if selectedRange == 0 {
+                                AxisMarks(values: .stride(by: .day)) { _ in
+                                    AxisValueLabel(format: .dateTime.weekday(.abbreviated))
+                                        .foregroundStyle(Color.gray)
+                                }
+                            } else {
+                                AxisMarks(values: .stride(by: .day, count: 5)) { _ in
+                                    AxisValueLabel(format: .dateTime.day())
+                                        .foregroundStyle(Color.gray)
+                                }
                             }
                         }
                         .frame(height: 220)
@@ -146,13 +167,14 @@ struct AnalyticsView: View {
         }
     }
     
-    private func calculate7DayData() -> [DailyCompletion] {
+    private func calculateChartData() -> [DailyCompletion] {
         let calendar = Calendar.current
         var data: [DailyCompletion] = []
         
         let today = calendar.startOfDay(for: Date())
+        let daysCount = selectedRange == 0 ? 7 : 30
         
-        for i in (0..<7).reversed() {
+        for i in (0..<daysCount).reversed() {
             guard let date = calendar.date(byAdding: .day, value: -i, to: today) else { continue }
             
             var count = 0

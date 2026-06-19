@@ -2,30 +2,71 @@ import WidgetKit
 import SwiftUI
 
 struct Provider: TimelineProvider {
+    private let sharedDefaults = UserDefaults(suiteName: "group.com.flare.streak")
+    
     func placeholder(in context: Context) -> SimpleEntry {
-        SimpleEntry(date: Date(), isNearBreak: false)
+        SimpleEntry(
+            date: Date(),
+            isNearBreak: false,
+            streakCount: 12,
+            consistencyPercentage: 82,
+            momentumScore: 148,
+            weeklyProgress: [1.0, 0.8, 1.0, 0.5, 1.0, 0.3, 0.0],
+            heatmapData: Array(repeating: 0, count: 48),
+            totalDaysWithCompletions: 148
+        )
     }
 
     func getSnapshot(in context: Context, completion: @escaping (SimpleEntry) -> ()) {
-        let entry = SimpleEntry(date: Date(), isNearBreak: false)
+        let entry = getEntry(for: Date())
         completion(entry)
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> ()) {
         let currentDate = Date()
-        let hour = Calendar.current.component(.hour, from: currentDate)
-        let isNearBreak = hour >= 20
+        let entry = getEntry(for: currentDate)
         
-        let entry = SimpleEntry(date: currentDate, isNearBreak: isNearBreak)
         let nextUpdateDate = Calendar.current.date(byAdding: .hour, value: 1, to: currentDate)!
         let timeline = Timeline(entries: [entry], policy: .after(nextUpdateDate))
         completion(timeline)
+    }
+    
+    private func getEntry(for date: Date) -> SimpleEntry {
+        let hour = Calendar.current.component(.hour, from: date)
+        let isNearBreak = hour >= 20
+        
+        let defaults = sharedDefaults
+        let streak = defaults?.integer(forKey: "streakCount") ?? 0
+        let consistency = defaults?.integer(forKey: "consistencyPercentage") ?? 0
+        let momentum = defaults?.integer(forKey: "momentumScore") ?? 0
+        let weekly = defaults?.array(forKey: "weeklyProgress") as? [Double] ?? [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        let heatmap = defaults?.array(forKey: "heatmapData") as? [Int] ?? Array(repeating: 0, count: 48)
+        let totalDays = defaults?.integer(forKey: "totalDaysWithCompletions") ?? 0
+        
+        return SimpleEntry(
+            date: date,
+            isNearBreak: isNearBreak,
+            streakCount: streak,
+            consistencyPercentage: consistency,
+            momentumScore: momentum,
+            weeklyProgress: weekly,
+            heatmapData: heatmap,
+            totalDaysWithCompletions: totalDays
+        )
     }
 }
 
 struct SimpleEntry: TimelineEntry {
     let date: Date
     let isNearBreak: Bool
+    
+    // Live Stats
+    let streakCount: Int
+    let consistencyPercentage: Int
+    let momentumScore: Int
+    let weeklyProgress: [Double]
+    let heatmapData: [Int]
+    let totalDaysWithCompletions: Int
 }
 
 struct HomeScreenWidgetsEntryView : View {
@@ -42,11 +83,11 @@ struct HomeScreenWidgetsEntryView : View {
             
             switch family {
             case .systemSmall:
-                SmallWidgetView(isNearBreak: entry.isNearBreak)
+                SmallWidgetView(entry: entry)
             case .systemMedium:
-                MediumWidgetView()
+                MediumWidgetView(entry: entry)
             case .systemLarge:
-                LargeWidgetView()
+                LargeWidgetView(entry: entry)
             default:
                 Text("Unsupported")
             }
@@ -55,24 +96,24 @@ struct HomeScreenWidgetsEntryView : View {
 }
 
 struct SmallWidgetView: View {
-    let isNearBreak: Bool
+    let entry: SimpleEntry
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack {
                 ZStack {
                     Circle()
-                        .fill(isNearBreak ? Color.red.opacity(0.2) : Color(red: 0.16, green: 0.09, blue: 0.0))
+                        .fill(entry.isNearBreak ? Color.red.opacity(0.2) : Color(red: 0.16, green: 0.09, blue: 0.0))
                         .frame(width: 24, height: 24)
-                    Image(systemName: isNearBreak ? "flame.fill" : "flame")
+                    Image(systemName: entry.isNearBreak ? "flame.fill" : "flame")
                         .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(isNearBreak ? .red : Color.orange)
-                        .offset(x: isNearBreak ? 1 : 0) // Static "shake" offset
+                        .foregroundColor(entry.isNearBreak ? .red : Color.orange)
+                        .offset(x: entry.isNearBreak ? 1 : 0) // Static "shake" offset
                 }
                 
                 Spacer()
                 
-                if isNearBreak {
+                if entry.isNearBreak {
                     Text("BREAKING")
                         .font(.system(size: 8, weight: .black))
                         .foregroundColor(.red)
@@ -81,7 +122,7 @@ struct SmallWidgetView: View {
                         .background(Color.red.opacity(0.2))
                         .cornerRadius(4)
                 } else {
-                    Text("82%")
+                    Text("\(entry.consistencyPercentage)%")
                         .font(.system(size: 12, weight: .bold))
                         .foregroundColor(Color(red: 1.0, green: 0.55, blue: 0.0))
                 }
@@ -90,7 +131,7 @@ struct SmallWidgetView: View {
             Spacer()
             
             VStack(alignment: .leading, spacing: 2) {
-                Text("12")
+                Text("\(entry.streakCount)")
                     .font(.system(size: 40, weight: .bold, design: .rounded))
                     .foregroundColor(.white)
                 
@@ -105,8 +146,8 @@ struct SmallWidgetView: View {
 }
 
 struct MediumWidgetView: View {
+    let entry: SimpleEntry
     let days = ["M", "T", "W", "T", "F", "S", "S"]
-    let progress: [CGFloat] = [1.0, 0.8, 1.0, 0.5, 1.0, 0.3, 0.0] // Example data matching mockup
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -121,7 +162,7 @@ struct MediumWidgetView: View {
                 
                 Spacer()
                 
-                Text("Next: Meditation")
+                Text("Power: \(entry.momentumScore)")
                     .font(.system(size: 12))
                     .foregroundColor(Color(red: 1.0, green: 0.8, blue: 0.7)) // Pale orange/peach
             }
@@ -136,7 +177,7 @@ struct MediumWidgetView: View {
                                 
                                 Capsule()
                                     .fill(Color(red: 1.0, green: 0.6, blue: 0.2)) // Peach/Orange
-                                    .frame(height: geo.size.height * progress[i])
+                                    .frame(height: geo.size.height * CGFloat(entry.weeklyProgress[safe: i] ?? 0.0))
                             }
                         }
                         .frame(width: 14, height: 40)
@@ -166,7 +207,7 @@ struct MediumWidgetView: View {
                 
                 Spacer()
                 
-                Text("+3 Tasks Left")
+                Text("\(entry.consistencyPercentage)% Consistency")
                     .font(.system(size: 10, weight: .bold))
                     .foregroundColor(Color(red: 1.0, green: 0.55, blue: 0.0))
             }
@@ -176,6 +217,8 @@ struct MediumWidgetView: View {
 }
 
 struct LargeWidgetView: View {
+    let entry: SimpleEntry
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
@@ -183,7 +226,7 @@ struct LargeWidgetView: View {
                     Text("Pulse Matrix")
                         .font(.system(size: 18, weight: .bold))
                         .foregroundColor(.white)
-                    Text("Intensity over 12 weeks")
+                    Text("Intensity over 4 weeks")
                         .font(.system(size: 12))
                         .foregroundColor(Color(white: 0.7))
                 }
@@ -210,7 +253,7 @@ struct LargeWidgetView: View {
                 .padding(.top, 4)
                 
                 VStack(spacing: 4) {
-                    // The mockup shows 4 rows of boxes.
+                    // The heatmap shows 4 rows of boxes.
                     ForEach(0..<4, id: \.self) { row in
                         HStack(spacing: 4) {
                             ForEach(0..<12, id: \.self) { col in
@@ -227,7 +270,7 @@ struct LargeWidgetView: View {
             
             HStack(alignment: .bottom, spacing: 24) {
                 VStack(alignment: .leading, spacing: 0) {
-                    Text("148")
+                    Text("\(entry.totalDaysWithCompletions)")
                         .font(.system(size: 28, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
                     Text("TOTAL DAYS")
@@ -237,7 +280,7 @@ struct LargeWidgetView: View {
                 }
                 
                 VStack(alignment: .leading, spacing: 0) {
-                    Text("94%")
+                    Text("\(entry.consistencyPercentage)%")
                         .font(.system(size: 28, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
                     Text("CONSISTENCY")
@@ -250,18 +293,24 @@ struct LargeWidgetView: View {
         .padding(20)
     }
     
-    // Helper to generate mockup-like heatmap colors
+    // Helper to generate heatmap colors based on live heatmapData
     func getColor(row: Int, col: Int) -> Color {
+        let index = row * 12 + col
+        guard index < entry.heatmapData.count else { return Color(white: 0.15) }
+        let value = entry.heatmapData[index]
+        
         let orange = Color(red: 1.0, green: 0.55, blue: 0.0)
         let darkOrange = Color(red: 0.8, green: 0.4, blue: 0.0)
         let empty = Color(white: 0.2)
-        let darkEmpty = Color(white: 0.15)
         
-        let val = (row * 3 + col * 7) % 10
-        if val > 6 { return orange }
-        if val > 4 { return darkOrange }
-        if val > 2 { return darkEmpty }
-        return empty
+        switch value {
+        case 2:
+            return orange // All completed
+        case 1:
+            return darkOrange // Some completed
+        default:
+            return empty // None completed
+        }
     }
 }
 
@@ -278,20 +327,54 @@ struct HomeScreenWidgets: Widget {
     }
 }
 
+// Safe array accessor
+extension Collection {
+    subscript(safe index: Index) -> Element? {
+        return indices.contains(index) ? self[index] : nil
+    }
+}
+
 #Preview("Small Widget", as: .systemSmall) {
     HomeScreenWidgets()
 } timeline: {
-    SimpleEntry(date: .now)
+    SimpleEntry(
+        date: .now,
+        isNearBreak: false,
+        streakCount: 12,
+        consistencyPercentage: 82,
+        momentumScore: 148,
+        weeklyProgress: [1.0, 0.8, 1.0, 0.5, 1.0, 0.3, 0.0],
+        heatmapData: Array(repeating: 0, count: 48),
+        totalDaysWithCompletions: 148
+    )
 }
 
 #Preview("Medium Widget", as: .systemMedium) {
     HomeScreenWidgets()
 } timeline: {
-    SimpleEntry(date: .now)
+    SimpleEntry(
+        date: .now,
+        isNearBreak: false,
+        streakCount: 12,
+        consistencyPercentage: 82,
+        momentumScore: 148,
+        weeklyProgress: [1.0, 0.8, 1.0, 0.5, 1.0, 0.3, 0.0],
+        heatmapData: Array(repeating: 0, count: 48),
+        totalDaysWithCompletions: 148
+    )
 }
 
 #Preview("Large Widget", as: .systemLarge) {
     HomeScreenWidgets()
 } timeline: {
-    SimpleEntry(date: .now)
+    SimpleEntry(
+        date: .now,
+        isNearBreak: false,
+        streakCount: 12,
+        consistencyPercentage: 82,
+        momentumScore: 148,
+        weeklyProgress: [1.0, 0.8, 1.0, 0.5, 1.0, 0.3, 0.0],
+        heatmapData: Array(repeating: 0, count: 48),
+        totalDaysWithCompletions: 148
+    )
 }

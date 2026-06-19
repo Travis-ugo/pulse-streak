@@ -3,6 +3,7 @@ import SwiftUI
 struct AwardsView: View {
     @EnvironmentObject private var dataManager: DataManager
     private var habits: [Habit] { dataManager.habits }
+    @AppStorage("selectedTheme") private var selectedTheme = "EMBER"
     @State private var showingProfile = false
     @ObservedObject private var authManager = AuthManager.shared
     

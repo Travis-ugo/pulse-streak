@@ -368,3 +368,27 @@ struct InviteView: View {
         }
     }
 }
+
+#Preview {
+    NavigationView {
+        GroupDetailView(groupId: "preview-group-id")
+    }
+    .onAppear {
+        GroupManager.shared.groups = [
+            StreakGroup(
+                id: "preview-group-id",
+                name: "Gym Bros",
+                creatorId: "user1",
+                memberIds: ["user1", "user2"],
+                taskType: .shared,
+                sharedTaskName: "Daily Workout",
+                streakCount: 7,
+                lastStreakUpdate: nil,
+                createdAt: Date(),
+                memberCompletions: [:],
+                icon: "person.2.fill",
+                reminderTime: nil
+            )
+        ]
+    }
+}

@@ -26,12 +26,45 @@ extension Color {
         )
     }
     
-    // MARK: - Stitch 'Ember & Ash' Theme Colors
+    // MARK: - Stitch Theme Colors
     static let stitchBackground = Color(hex: "#0A0A0A")
     static let stitchSurface = Color(hex: "#161616")
-    static let stitchPrimary = Color(hex: "#FF8C00")
-    static let stitchPrimaryBright = Color(hex: "#FFA500")
-    static let stitchSecondary = Color(hex: "#8A2BE2")
+    
+    static var stitchPrimary: Color {
+        let theme = UserDefaults.standard.string(forKey: "selectedTheme") ?? "EMBER"
+        switch theme {
+        case "SKY":
+            return Color(hex: "#007AFF") // Sky Blue
+        case "NEON":
+            return Color(hex: "#FF007F") // Neon Pink
+        default:
+            return Color(hex: "#FF8C00") // Ember Orange
+        }
+    }
+    
+    static var stitchPrimaryBright: Color {
+        let theme = UserDefaults.standard.string(forKey: "selectedTheme") ?? "EMBER"
+        switch theme {
+        case "SKY":
+            return Color(hex: "#64D2FF") // Sky Light Blue
+        case "NEON":
+            return Color(hex: "#BF5AF2") // Neon Purple
+        default:
+            return Color(hex: "#FFA500") // Bright Ember
+        }
+    }
+    
+    static var stitchSecondary: Color {
+        let theme = UserDefaults.standard.string(forKey: "selectedTheme") ?? "EMBER"
+        switch theme {
+        case "SKY":
+            return Color(hex: "#5856D6") // Indigo
+        case "NEON":
+            return Color(hex: "#00F0FF") // Cyan
+        default:
+            return Color(hex: "#8A2BE2") // Purple
+        }
+    }
     
     static var stitchGradient: LinearGradient {
         LinearGradient(colors: [stitchPrimary, stitchPrimaryBright], startPoint: .topLeading, endPoint: .bottomTrailing)

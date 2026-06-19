@@ -4,6 +4,8 @@ struct CalendarView: View {
     @Binding var selectedTab: Int
     @EnvironmentObject private var dataManager: DataManager
     private var habits: [Habit] { dataManager.habits }
+    
+    @AppStorage("selectedTheme") private var selectedTheme = "EMBER"
     @State private var showingProfile = false
     @ObservedObject private var authManager = AuthManager.shared
     
@@ -329,7 +331,7 @@ struct TimelineNode: View {
                     Rectangle()
                         .fill(lineColor)
                         .frame(width: 2)
-                        .frame(height: 140) // Fixed height to simulate continuous line
+                        .frame(height: 160) // Fixed height to simulate continuous line
                 }
             }
             .padding(.top, 24)
@@ -394,7 +396,7 @@ struct TimelineNode: View {
                     Spacer()
                 }
             )
-            .padding(.bottom, state == .locked ? 0 : 20)
+            .padding(.bottom, state == .locked ? 0 : 36)
         }
     }
     

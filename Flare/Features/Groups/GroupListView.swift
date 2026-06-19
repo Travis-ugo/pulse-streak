@@ -3,6 +3,7 @@ import SwiftUI
 struct GroupListView: View {
     @ObservedObject var groupManager = GroupManager.shared
     @ObservedObject var authManager = AuthManager.shared
+    @AppStorage("selectedTheme") private var selectedTheme = "EMBER"
     @State private var showingCreateGroup = false
     
     var body: some View {
@@ -83,6 +84,7 @@ struct GroupListView: View {
 struct InviteCard: View {
     let invite: GroupInvite
     @ObservedObject var groupManager = GroupManager.shared
+    @AppStorage("selectedTheme") private var selectedTheme = "EMBER"
     
     var body: some View {
         HStack {
@@ -114,14 +116,21 @@ struct InviteCard: View {
             }
         }
         .padding()
-        .background(Color.stitchSurface)
-        .cornerRadius(16)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color.stitchSurface)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.white.opacity(0.1), lineWidth: 0.5)
+        )
         .padding(.horizontal)
     }
 }
 
 struct GroupCard: View {
     let group: StreakGroup
+    @AppStorage("selectedTheme") private var selectedTheme = "EMBER"
     
     var body: some View {
         HStack(spacing: 16) {
@@ -159,8 +168,14 @@ struct GroupCard: View {
             }
         }
         .padding()
-        .background(Color.stitchSurface)
-        .cornerRadius(16)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color.stitchSurface)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.white.opacity(0.1), lineWidth: 0.5)
+        )
         .padding(.horizontal)
     }
 }
@@ -196,4 +211,8 @@ struct EmptyGroupsView: View {
             .padding(.top, 8)
         }
     }
+}
+
+#Preview {
+    GroupListView()
 }

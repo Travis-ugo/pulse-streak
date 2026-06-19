@@ -11,6 +11,7 @@ struct ProfileView: View {
     
     @State private var selectedItem: PhotosPickerItem? = nil
     @State private var isUploading = false
+    @State private var showingAvatarPreview = false
     
     private var profileUIImage: UIImage? {
         guard let photoURL = authManager.currentUser?.photoURL else { return nil }
@@ -68,8 +69,9 @@ struct ProfileView: View {
     }
     
     var body: some View {
-        ZStack {
-            Color.stitchBackground.edgesIgnoringSafeArea(.all)
+        NavigationView {
+            ZStack {
+                Color.stitchBackground.edgesIgnoringSafeArea(.all)
             
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 32) {
@@ -89,8 +91,10 @@ struct ProfileView: View {
                     
                     // Profile Card
                     VStack(spacing: 16) {
-                        // Avatar selection
-                        PhotosPicker(selection: $selectedItem, matching: .images, photoLibrary: .shared()) {
+                        // Avatar preview button
+                        Button(action: {
+                            showingAvatarPreview = true
+                        }) {
                             ZStack {
                                 Circle()
                                     .stroke(Color.stitchPrimary, lineWidth: 2)
@@ -323,11 +327,14 @@ struct ProfileView: View {
                         
                         VStack(spacing: 0) {
                             // Notifications
-                            PreferenceRow(icon: "bell", title: "Notifications") {
-                                Image(systemName: "chevron.right")
-                                    .font(.system(size: 14))
-                                    .foregroundColor(Color(hex: "#555555"))
+                            NavigationLink(destination: NotificationSettingsView()) {
+                                PreferenceRow(icon: "bell", title: "Notifications") {
+                                    Image(systemName: "chevron.right")
+                                        .font(.system(size: 14))
+                                        .foregroundColor(Color(hex: "#555555"))
+                                }
                             }
+                            .buttonStyle(PlainButtonStyle())
                             
                             Divider().background(Color.white.opacity(0.05)).padding(.leading, 64)
                             
@@ -335,14 +342,22 @@ struct ProfileView: View {
                             VStack(alignment: .leading, spacing: 16) {
                                 PreferenceRow(icon: "paintpalette", title: "Visual Theme") { EmptyView() }
                                     .padding(.bottom, -16)
-                                
                                 HStack(spacing: 24) {
                                     ThemeSwatch(name: "EMBER", color: Color.stitchPrimary, isSelected: selectedTheme == "EMBER")
-                                        .onTapGesture { selectedTheme = "EMBER" }
+                                        .onTapGesture {
+                                            selectedTheme = "EMBER"
+                                            UserDefaults.standard.synchronize()
+                                        }
                                     ThemeSwatch(name: "SKY", color: Color(hex: "#2B4673"), isSelected: selectedTheme == "SKY")
-                                        .onTapGesture { selectedTheme = "SKY" }
+                                        .onTapGesture {
+                                            selectedTheme = "SKY"
+                                            UserDefaults.standard.synchronize()
+                                        }
                                     ThemeSwatch(name: "NEON", color: Color(hex: "#480081"), isSelected: selectedTheme == "NEON")
-                                        .onTapGesture { selectedTheme = "NEON" }
+                                        .onTapGesture {
+                                            selectedTheme = "NEON"
+                                            UserDefaults.standard.synchronize()
+                                        }
                                 }
                                 .padding(.leading, 64)
                                 .padding(.bottom, 20)
@@ -402,7 +417,12 @@ struct ProfileView: View {
                 .padding(.vertical)
             }
         }
+        .navigationBarHidden(true)
+        .fullScreenCover(isPresented: $showingAvatarPreview) {
+            AvatarPreviewView(profileUIImage: profileUIImage, selectedItem: $selectedItem, isUploading: $isUploading)
+        }
     }
+}
 }
 
 struct PreferenceRow<Content: View>: View {
@@ -473,4 +493,87 @@ struct ThemeSwatch: View {
 #Preview {
     ProfileView()
         .environmentObject(DataManager.shared)
+}
+
+struct AvatarPreviewView: View {
+    let profileUIImage: UIImage?
+    @Binding var selectedItem: PhotosPickerItem?
+    @Binding var isUploading: Bool
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        ZStack {
+            // Full dark screen
+            Color.black.edgesIgnoringSafeArea(.all)
+            
+            VStack {
+                // Top controls bar
+                HStack {
+                    Button(action: { dismiss() }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "chevron.left")
+                            Text("Back")
+                        }
+                        .font(.headline)
+                        .foregroundColor(.white)
+                    }
+                    
+                    Spacer()
+                    
+                    Text("Profile Photo")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                    
+                    Spacer()
+                    
+                    // Invisible spacer for visual balance
+                    HStack(spacing: 4) {
+                        Image(systemName: "chevron.left")
+                        Text("Back")
+                    }
+                    .font(.headline)
+                    .foregroundColor(.clear)
+                }
+                .padding()
+                
+                Spacer()
+                
+                // Photo container
+                if let uiImage = profileUIImage {
+                    Image(uiImage: uiImage)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    Image(systemName: "person.crop.circle.fill")
+                        .resizable()
+                        .scaledToFit()
+                        .foregroundColor(Color(hex: "#222222"))
+                        .frame(width: 250, height: 250)
+                }
+                
+                Spacer()
+                
+                // Action row
+                PhotosPicker(selection: $selectedItem, matching: .images, photoLibrary: .shared()) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "photo.on.rectangle.angled")
+                        Text("Change Photo")
+                    }
+                    .font(.headline)
+                    .foregroundColor(.black)
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 14)
+                    .background(Color.stitchPrimary)
+                    .cornerRadius(24)
+                    .shadow(color: Color.stitchPrimary.opacity(0.3), radius: 10)
+                }
+                .padding(.bottom, 40)
+            }
+        }
+        .onChange(of: selectedItem) { _ in
+            // Dismiss preview once photo is chosen and starts uploading
+            dismiss()
+        }
+    }
 }
