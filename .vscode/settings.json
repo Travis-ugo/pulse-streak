@@ -6,6 +6,7 @@
     "Flare"
   ],
   "sweetpad.workspacePath": "Flare.xcworkspace",
+  "sweetpad.build.xcodeWorkspacePath": "Flare.xcworkspace",
   "sweetpad.scheme": "Flare",
   "swift.backgroundCompilation": true
 }

@@ -34,10 +34,10 @@ struct LoginView: View {
                 // Inputs
                 VStack(spacing: 16) {
                     if isSignUp {
-                        customTextField(placeholder: "Name", text: $name, icon: "person")
+                        CustomTextField(placeholder: "Name", text: $name, icon: "person")
                     }
-                    customTextField(placeholder: "Email", text: $email, icon: "envelope")
-                    customSecureField(placeholder: "Password", text: $password, icon: "lock")
+                    CustomTextField(placeholder: "Email", text: $email, icon: "envelope")
+                    CustomSecureField(placeholder: "Password", text: $password, icon: "lock")
                 }
                 .padding(.horizontal)
                 
@@ -108,56 +108,6 @@ struct LoginView: View {
         }
     }
     
-    private func customTextField(placeholder: String, text: Binding<String>, icon: String) -> some View {
-        HStack {
-            Image(systemName: icon)
-                .foregroundColor(.gray)
-                .frame(width: 20)
-            TextField("", text: text, prompt: Text(placeholder).foregroundColor(Color.white.opacity(0.4)))
-                .textInputAutocapitalization(.none)
-                .foregroundColor(.white)
-        }
-        .padding()
-        .background(Color.stitchSurface)
-        .cornerRadius(10)
-    }
-    
-    private func customSecureField(placeholder: String, text: Binding<String>, icon: String) -> some View {
-        HStack {
-            Image(systemName: icon)
-                .foregroundColor(.gray)
-                .frame(width: 20)
-            SecureField("", text: text, prompt: Text(placeholder).foregroundColor(Color.white.opacity(0.4)))
-                .foregroundColor(.white)
-        }
-        .padding()
-        .background(Color.stitchSurface)
-        .cornerRadius(10)
-    }
-    
-    private func getFriendlyErrorMessage(_ errorMessage: String) -> String {
-        let lowercased = errorMessage.lowercased()
-        if lowercased.contains("keychain") {
-            return "Secure Storage Lock: The iOS Simulator's secure store is locked. Please try again or restart the simulator."
-        }
-        if lowercased.contains("email address is badly formatted") || lowercased.contains("invalid-email") || lowercased.contains("invalid email") {
-            return "Please enter a valid email address."
-        }
-        if lowercased.contains("email address is already in use") || lowercased.contains("email-already-in-use") {
-            return "This email is already registered. Try signing in instead!"
-        }
-        if lowercased.contains("password must be") || lowercased.contains("weak-password") || lowercased.contains("password is invalid") {
-            return "Password must be at least 6 characters long."
-        }
-        if lowercased.contains("no user record") || lowercased.contains("invalid-credential") || lowercased.contains("wrong-password") || lowercased.contains("wrong password") {
-            return "Incorrect email or password. Please try again."
-        }
-        if lowercased.contains("network") || lowercased.contains("connection lost") {
-            return "Network connection issue. Please check your internet connection."
-        }
-        return errorMessage
-    }
-    
     private func handleAuth() {
         isLoading = true
         error = nil
@@ -166,7 +116,7 @@ struct LoginView: View {
             Auth.auth().createUser(withEmail: email, password: password) { result, err in
                 if let err = err {
                     isLoading = false
-                    error = getFriendlyErrorMessage(err.localizedDescription)
+                    error = AuthErrorHelper.getFriendlyErrorMessage(err.localizedDescription)
                     return
                 }
                 
@@ -201,7 +151,7 @@ struct LoginView: View {
             Auth.auth().signIn(withEmail: email, password: password) { result, err in
                 isLoading = false
                 if let err = err {
-                    error = getFriendlyErrorMessage(err.localizedDescription)
+                    error = AuthErrorHelper.getFriendlyErrorMessage(err.localizedDescription)
                 }
             }
         }
@@ -216,7 +166,7 @@ struct LoginView: View {
                 try await GoogleAuthService.shared.signInWithGoogle()
                 isLoading = false
             } catch {
-                self.error = getFriendlyErrorMessage(error.localizedDescription)
+                self.error = AuthErrorHelper.getFriendlyErrorMessage(error.localizedDescription)
                 isLoading = false
             }
         }

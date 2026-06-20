@@ -14,24 +14,7 @@ struct DashboardView: View {
     
     private var profileUIImage: UIImage? {
         guard let photoURL = authManager.currentUser?.photoURL else { return nil }
-        return loadImageFromBase64(photoURL)
-    }
-    
-    private func loadImageFromBase64(_ base64String: String) -> UIImage? {
-        let cleanString: String
-        if base64String.hasPrefix("data:image") {
-            let components = base64String.components(separatedBy: ",")
-            if components.count > 1 {
-                cleanString = components[1]
-            } else {
-                return nil
-            }
-        } else {
-            cleanString = base64String
-        }
-        
-        guard let data = Data(base64Encoded: cleanString) else { return nil }
-        return UIImage(data: data)
+        return UIImage.fromBase64(photoURL)
     }
     
     private var userGreetingName: String {
@@ -110,279 +93,37 @@ struct DashboardView: View {
                 VStack(alignment: .leading, spacing: 20) {
                     
                     // 1. Custom Header
-                    HStack {
-                        // Avatar button
-                        Button(action: {
-                            showingProfile = true
-                        }) {
-                            ZStack {
-                                Circle()
-                                    .fill(Color.stitchSurface)
-                                    .frame(width: 36, height: 36)
-                                
-                                if let uiImage = profileUIImage {
-                                    Image(uiImage: uiImage)
-                                        .resizable()
-                                        .scaledToFill()
-                                        .frame(width: 36, height: 36)
-                                        .clipShape(Circle())
-                                } else {
-                                    Text(authManager.currentUser?.initials ?? "U")
-                                        .font(.system(size: 14, weight: .bold))
-                                        .foregroundColor(.stitchPrimaryBright)
-                                }
-                            }
-                            .overlay(Circle().stroke(Color.white.opacity(0.1), lineWidth: 0.5))
-                        }
-                        
-                        Spacer()
-                        
-                        Image(systemName: "flame")
-                            .foregroundColor(.stitchPrimary)
-                            .font(.title3)
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 10)
+                    DashboardHeader(
+                        profileUIImage: profileUIImage,
+                        initials: authManager.currentUser?.initials ?? "U",
+                        onProfileTap: { showingProfile = true }
+                    )
                     
                     // 2. Greeting
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(greetingMessage)
-                            .font(.system(size: 28, weight: .bold, design: .rounded))
-                            .foregroundColor(.white)
-                        
-                        Text("🔥")
-                            .font(.title)
-                        
-                        Text("Your momentum is undeniable today.")
-                            .font(.subheadline)
-                            .foregroundColor(Color(hex: "#A1A1A1"))
-                    }
-                    .padding(.horizontal, 20)
+                    DashboardGreeting(greetingMessage: greetingMessage)
                     
                     // 3. Main Streak Card
-                    HStack {
-                        VStack(alignment: .leading, spacing: 12) {
-                            HStack(alignment: .firstTextBaseline, spacing: 4) {
-                                Text("\(calculateLongestStreak())")
-                                    .font(.system(size: 40, weight: .bold, design: .rounded))
-                                    .foregroundStyle(Color.stitchGradient)
-                                Text("Day Streak")
-                                    .font(.headline)
-                                    .foregroundColor(.white)
-                            }
-                            
-                            HStack {
-                                Image(systemName: "star.circle.fill")
-                                Text(rankName)
-                            }
-                            .font(.caption.bold())
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 6)
-                            .background(Color.stitchSecondary.opacity(0.2))
-                            .foregroundColor(Color(hex: "#DCB8FF"))
-                            .cornerRadius(12)
-                        }
-                        
-                        Spacer()
-                        
-                        // Progress Ring
-                        ZStack {
-                            ProgressRing(progress: calculateTodayProgress(), color: .stitchPrimary, lineWidth: 8)
-                                .frame(width: 70, height: 70)
-                                .shadow(color: Color.stitchPrimary.opacity(0.4), radius: 10)
-                            
-                            Text("\(Int(calculateTodayProgress() * 100))%")
-                                .font(.system(.headline, design: .rounded, weight: .bold))
-                                .foregroundColor(.white)
-                        }
-                    }
-                    .padding(24)
-                    .background(
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 16)
-                                .fill(Color.stitchSurface)
-                            RoundedRectangle(cornerRadius: 16)
-                                .stroke(Color.white.opacity(0.1), lineWidth: 0.5)
-                        }
+                    DashboardStreakCard(
+                        longestStreak: calculateLongestStreak(),
+                        rankName: rankName,
+                        todayProgress: calculateTodayProgress()
                     )
-                    .padding(.horizontal, 20)
                     
                     // 4. Metric Cards
-                    HStack(spacing: 16) {
-                        // Power Score
-                        VStack(alignment: .leading, spacing: 12) {
-                            Image(systemName: "bolt.fill")
-                                .foregroundColor(.stitchPrimary)
-                            
-                            Spacer(minLength: 20)
-                            
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Power Score")
-                                    .font(.caption)
-                                    .foregroundColor(Color(hex: "#A1A1A1"))
-                                Text("\(dataManager.userStats.momentumScore)")
-                                    .font(.system(.title2, design: .rounded, weight: .bold))
-                                    .foregroundColor(.white)
-                            }
-                        }
-                        .padding(20)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Color.stitchSurface)
-                        .cornerRadius(16)
-                        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.white.opacity(0.1), lineWidth: 0.5))
-                        
-                        // Consistency
-                        VStack(alignment: .leading, spacing: 12) {
-                            Image(systemName: "chart.line.uptrend.xyaxis")
-                                .foregroundColor(.stitchSecondary)
-                            
-                            Spacer(minLength: 20)
-                            
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Consistency")
-                                    .font(.caption)
-                                    .foregroundColor(Color(hex: "#A1A1A1"))
-                                Text(consistencyScore)
-                                    .font(.system(.title2, design: .rounded, weight: .bold))
-                                    .foregroundColor(.white)
-                            }
-                        }
-                        .padding(20)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Color.stitchSurface)
-                        .cornerRadius(16)
-                        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.white.opacity(0.1), lineWidth: 0.5))
-                    }
-                    .padding(.horizontal, 20)
+                    DashboardMetricCards(
+                        momentumScore: dataManager.userStats.momentumScore,
+                        consistencyScore: consistencyScore
+                    )
                     
                     // 5. Today's Habits
-                    HStack {
-                        Text("Today's Habits")
-                            .font(.title3.bold())
-                            .foregroundColor(.white)
-                        Spacer()
-                        Text("View All")
-                            .font(.caption)
-                            .foregroundColor(.stitchPrimaryBright)
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 10)
-                    
-                    if habits.isEmpty {
-                        VStack(spacing: 12) {
-                            Image(systemName: "flame")
-                                .font(.system(size: 40))
-                                .foregroundColor(.gray)
-                            Text("No habits yet")
-                                .font(.headline)
-                                .foregroundColor(.white)
-                            Text("Tap the + button to build your momentum.")
-                                .font(.subheadline)
-                                .foregroundColor(Color(hex: "#A1A1A1"))
-                                .multilineTextAlignment(.center)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.top, 20)
-                    } else {
-                        LazyVStack(spacing: 12) {
-                            ForEach(habits) { habit in
-                                EmberCardView(habit: habit)
-                            }
-                        }
-                        .padding(.horizontal, 20)
-                    }
+                    DashboardHabitsList(habits: habits)
                     
                     // Streak Groups Section
-                    HStack {
-                        Text("Streak Groups")
-                            .font(.title3.bold())
-                            .foregroundColor(.white)
-                        Spacer()
-                        Button(action: { showingCreateGroup = true }) {
-                            Image(systemName: "plus")
-                                .font(.caption.bold())
-                                .foregroundColor(.stitchPrimaryBright)
-                        }
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 10)
-                    
-                    if groupManager.groups.isEmpty {
-                        VStack(spacing: 12) {
-                            Text("Better together. Start a shared journey.")
-                                .font(.subheadline)
-                                .foregroundColor(Color(hex: "#A1A1A1"))
-                                .multilineTextAlignment(.center)
-                            Button(action: { showingCreateGroup = true }) {
-                                Text("Create Group")
-                                    .font(.caption.bold())
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 8)
-                                    .background(Color.stitchPrimary)
-                                    .foregroundColor(.black)
-                                    .cornerRadius(12)
-                            }
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(20)
-                        .background(Color.stitchSurface)
-                        .cornerRadius(16)
-                        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.white.opacity(0.1), lineWidth: 0.5))
-                        .padding(.horizontal, 20)
-                    } else {
-                        LazyVStack(spacing: 12) {
-                            ForEach(groupManager.groups) { group in
-                                NavigationLink(destination: GroupDetailView(groupId: group.id)) {
-                                    GroupCard(group: group)
-                                }
-                                .buttonStyle(PlainButtonStyle())
-                            }
-                        }
-                    }
+                    DashboardGroupsList(showingCreateGroup: $showingCreateGroup)
                     
                     // 6. This Week Tracker
-                    Text("This Week")
-                        .font(.title3.bold())
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 20)
-                        .padding(.top, 10)
-                    
-                    HStack {
-                        ForEach(getWeekDays(), id: \.date) { day in
-                            VStack(spacing: 12) {
-                                Text(day.symbol)
-                                    .font(.caption2)
-                                    .foregroundColor(day.isToday ? .white : Color(hex: "#A1A1A1"))
-                                
-                                ZStack {
-                                    Circle()
-                                        .stroke(day.isToday ? Color.stitchPrimary : Color.white.opacity(0.1), lineWidth: 1)
-                                        .frame(width: 32, height: 32)
-                                    
-                                    if day.isCompleted {
-                                        Circle()
-                                            .fill(Color.stitchGradient)
-                                            .frame(width: 32, height: 32)
-                                        Image(systemName: "checkmark")
-                                            .font(.system(size: 10, weight: .bold))
-                                            .foregroundColor(.black)
-                                    }
-                                }
-                            }
-                            .frame(maxWidth: .infinity)
-                        }
-                    }
-                    .padding(20)
-                    .background(
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 16)
-                                .fill(Color.stitchSurface)
-                            RoundedRectangle(cornerRadius: 16)
-                                .stroke(Color.white.opacity(0.1), lineWidth: 0.5)
-                        }
-                    )
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 100) // Padding for FAB
+                    DashboardWeekTracker(weekDays: getWeekDays())
+                        .padding(.bottom, 100) // Padding for FAB
                 }
                 .padding(.vertical)
             }
@@ -435,17 +176,10 @@ struct DashboardView: View {
         return Double(completed) / Double(habits.count)
     }
     
-    struct WeekDay {
-        let date: Date
-        let symbol: String
-        let isToday: Bool
-        let isCompleted: Bool
-    }
-    
-    private func getWeekDays() -> [WeekDay] {
+    private func getWeekDays() -> [DashboardWeekTracker.WeekDay] {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
-        var days: [WeekDay] = []
+        var days: [DashboardWeekTracker.WeekDay] = []
         
         let formatter = DateFormatter()
         formatter.dateFormat = "EE" // Mon, Tue, Wed
@@ -464,7 +198,7 @@ struct DashboardView: View {
                 }
             }
             
-            days.append(WeekDay(
+            days.append(DashboardWeekTracker.WeekDay(
                 date: date,
                 symbol: symbol,
                 isToday: calendar.isDate(date, inSameDayAs: today),

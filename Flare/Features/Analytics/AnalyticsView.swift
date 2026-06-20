@@ -18,145 +18,39 @@ struct AnalyticsView: View {
     
     private var profileUIImage: UIImage? {
         guard let photoURL = authManager.currentUser?.photoURL else { return nil }
-        return loadImageFromBase64(photoURL)
-    }
-    
-    private func loadImageFromBase64(_ base64String: String) -> UIImage? {
-        let cleanString: String
-        if base64String.hasPrefix("data:image") {
-            let components = base64String.components(separatedBy: ",")
-            if components.count > 1 {
-                cleanString = components[1]
-            } else {
-                return nil
-            }
-        } else {
-            cleanString = base64String
-        }
-        
-        guard let data = Data(base64Encoded: cleanString) else { return nil }
-        return UIImage(data: data)
+        return UIImage.fromBase64(photoURL)
     }
     
     var body: some View {
-        ZStack {
+        let bestHabit = getBestHabit()
+        
+        return ZStack {
             Color.stitchBackground.edgesIgnoringSafeArea(.all)
             
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 24) {
                     
                     // Header
-                    HStack {
-                        Button(action: {
-                            showingProfile = true
-                        }) {
-                            ZStack {
-                                Circle()
-                                    .fill(Color.stitchSurface)
-                                    .frame(width: 36, height: 36)
-                                
-                                if let uiImage = profileUIImage {
-                                    Image(uiImage: uiImage)
-                                        .resizable()
-                                        .scaledToFill()
-                                        .frame(width: 36, height: 36)
-                                        .clipShape(Circle())
-                                } else {
-                                    Text(authManager.currentUser?.initials ?? "U")
-                                        .font(.system(size: 14, weight: .bold))
-                                        .foregroundColor(.stitchPrimaryBright)
-                                }
-                            }
-                            .overlay(Circle().stroke(Color.white.opacity(0.1), lineWidth: 0.5))
-                        }
-                        
-                        Text("My Insights")
-                            .font(.system(.title2, design: .rounded, weight: .bold))
-                            .foregroundStyle(Color.stitchGradient)
-                            .padding(.leading, 8)
-                        
-                        Spacer()
-                        
-                        Image(systemName: "flame")
-                            .font(.title2)
-                            .foregroundStyle(Color.stitchGradient)
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 24)
+                    AnalyticsHeader(
+                        profileUIImage: profileUIImage,
+                        initials: authManager.currentUser?.initials ?? "U",
+                        onProfileTap: { showingProfile = true }
+                    )
                     
                     // Chart Section
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack {
-                            Text(selectedRange == 0 ? "Last 7 Days" : "Last 30 Days")
-                                .font(.system(size: 18, weight: .bold, design: .rounded))
-                                .foregroundColor(.white)
-                            
-                            Spacer()
-                            
-                            Picker("Range", selection: $selectedRange) {
-                                Text("Weekly").tag(0)
-                                Text("Monthly").tag(1)
-                            }
-                            .pickerStyle(.segmented)
-                            .frame(width: 140)
-                        }
-                        .padding(.horizontal, 20)
-                        
-                        let chartData = calculateChartData()
-                        
-                        Chart {
-                            ForEach(chartData) { data in
-                                BarMark(
-                                    x: .value("Day", data.date, unit: .day),
-                                    y: .value("Completions", data.count)
-                                )
-                                .foregroundStyle(Color.stitchPrimary.gradient)
-                                .cornerRadius(selectedRange == 0 ? 4 : 2)
-                            }
-                        }
-                        .chartXAxis {
-                            if selectedRange == 0 {
-                                AxisMarks(values: .stride(by: .day)) { _ in
-                                    AxisValueLabel(format: .dateTime.weekday(.abbreviated))
-                                        .foregroundStyle(Color.gray)
-                                }
-                            } else {
-                                AxisMarks(values: .stride(by: .day, count: 5)) { _ in
-                                    AxisValueLabel(format: .dateTime.day())
-                                        .foregroundStyle(Color.gray)
-                                }
-                            }
-                        }
-                        .frame(height: 220)
-                        .padding()
-                        .background(
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 16)
-                                    .fill(Color.stitchSurface)
-                                RoundedRectangle(cornerRadius: 16)
-                                    .stroke(Color.white.opacity(0.1), lineWidth: 0.5)
-                            }
-                        )
-                        .padding(.horizontal, 20)
-                    }
+                    AnalyticsChartCard(
+                        selectedRange: $selectedRange,
+                        chartData: calculateChartData()
+                    )
                     
                     // Top Metrics Section
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Insights")
-                            .font(.system(size: 18, weight: .bold, design: .rounded))
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 20)
-                            .padding(.top, 10)
-                        
-                        let bestHabit = getBestHabit()
-                        
-                        VStack(spacing: 16) {
-                            InsightCard(title: "Best Performing Habit", value: bestHabit?.title ?? "None", icon: bestHabit?.icon ?? "star.fill", color: bestHabit != nil ? Color(hex: bestHabit!.colorHex) : .gray)
-                            InsightCard(title: "Longest Single Streak", value: "\(calculateLongestStreak()) Days", icon: "flame.fill", color: .orange)
-                            InsightCard(title: "Overall Completion Rate", value: "\(calculateCompletionRate())%", icon: "chart.pie.fill", color: .blue)
-                        }
-                        .padding(.horizontal, 20)
-                    }
+                    AnalyticsStatsGrid(
+                        bestHabitTitle: bestHabit?.title ?? "None",
+                        bestHabitIcon: bestHabit?.icon ?? "star.fill",
+                        bestHabitColor: bestHabit != nil ? Color(hex: bestHabit!.colorHex) : .gray,
+                        longestStreak: calculateLongestStreak(),
+                        completionRate: calculateCompletionRate()
+                    )
                 }
                 .padding(.vertical)
             }
@@ -231,39 +125,6 @@ struct AnalyticsView: View {
     }
 }
 
-struct InsightCard: View {
-    let title: String
-    let value: String
-    let icon: String
-    let color: Color
-    
-    var body: some View {
-        HStack(spacing: 16) {
-            ZStack {
-                Circle()
-                    .fill(color.opacity(0.2))
-                    .frame(width: 44, height: 44)
-                Image(systemName: icon)
-                    .foregroundColor(color)
-                    .font(.title3)
-            }
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(.caption)
-                    .foregroundColor(.gray)
-                Text(value)
-                    .font(.system(.headline, design: .rounded, weight: .semibold))
-                    .foregroundColor(.white)
-            }
-            Spacer()
-        }
-        .padding()
-        .background(Color.stitchSurface)
-        .cornerRadius(16)
-        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.white.opacity(0.1), lineWidth: 0.5))
-    }
-}
 
 #Preview {
     AnalyticsView()
