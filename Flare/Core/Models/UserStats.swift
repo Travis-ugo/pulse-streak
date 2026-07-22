@@ -1,6 +1,6 @@
 import Foundation
 
-final class UserStats: Identifiable, Codable {
+struct UserStats: Identifiable, Codable {
     var id: UUID
     var momentumScore: Int
     var totalCompletions: Int

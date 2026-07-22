@@ -50,6 +50,19 @@ class GroupManager: ObservableObject {
             }
     }
     
+    func stopListening() {
+        groupsListener?.remove()
+        groupsListener = nil
+        invitesListener?.remove()
+        invitesListener = nil
+        nudgesListener?.remove()
+        nudgesListener = nil
+        
+        self.groups = []
+        self.pendingInvites = []
+        self.activeNudges = []
+    }
+    
     func nudgeMember(memberId: String, in group: StreakGroup, sender: User) async throws {
         let nudgeId = UUID().uuidString
         let nudge = GroupNudge(
@@ -92,7 +105,7 @@ class GroupManager: ObservableObject {
         }
     }
     
-    func createGroup(name: String, taskType: GroupTaskType, sharedTaskName: String?, icon: String, reminderTime: Date, creator: User) async throws {
+    func createGroup(name: String, taskType: GroupTaskType, sharedTaskName: String?, icon: String, reminderTime: Date, creator: User) async throws -> String {
         let groupId = UUID().uuidString
         let newGroup = StreakGroup(
             id: groupId,
@@ -110,6 +123,7 @@ class GroupManager: ObservableObject {
         )
         
         try db.collection("groups").document(groupId).setData(from: newGroup)
+        return groupId
     }
     
     func inviteUser(email: String, to group: StreakGroup, sender: User) async throws {

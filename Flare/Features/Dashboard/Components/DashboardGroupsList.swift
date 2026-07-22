@@ -20,6 +20,20 @@ struct DashboardGroupsList: View {
             .padding(.horizontal, 20)
             .padding(.top, 10)
             
+            if !groupManager.pendingInvites.isEmpty {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Pending Invites")
+                        .font(.caption.bold())
+                        .foregroundColor(.stitchPrimaryBright)
+                        .padding(.horizontal, 20)
+                    
+                    ForEach(groupManager.pendingInvites) { invite in
+                        InviteCard(invite: invite)
+                    }
+                }
+                .padding(.bottom, 8)
+            }
+            
             if groupManager.groups.isEmpty {
                 VStack(spacing: 12) {
                     Text("Better together. Start a shared journey.")

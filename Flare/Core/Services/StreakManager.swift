@@ -51,9 +51,10 @@ class StreakManager {
                 
                 if streakBroken {
                     // Check for Streak Freeze
-                    let stats = DataManager.shared.userStats
+                    var stats = DataManager.shared.userStats
                     if stats.streakFreezes > 0 {
                         stats.streakFreezes -= 1
+                        DataManager.shared.userStats = stats
                         
                         // Add a "frozen" completion for yesterday to protect the streak
                         let yesterday = calendar.date(byAdding: .day, value: -1, to: endOfToday)!
@@ -95,6 +96,9 @@ class StreakManager {
                 habit.completionHistory?.remove(at: index)
             }
             habit.streakCount = max(0, habit.streakCount - 1)
+            
+            // End Live Activity
+            LiveActivityManager.shared.endHabitActivity()
         } else {
             // Complete for today
             let completion = Completion(completedAt: today, status: "completed")
@@ -104,6 +108,9 @@ class StreakManager {
             if habit.streakCount > habit.longestStreak {
                 habit.longestStreak = habit.streakCount
             }
+            
+            // Start Live Activity
+            LiveActivityManager.shared.startHabitActivity(title: habit.title, streakCount: habit.streakCount)
             
             // Haptic Feedback
             let impactMed = UIImpactFeedbackGenerator(style: .medium)

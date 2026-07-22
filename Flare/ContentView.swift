@@ -48,6 +48,12 @@ struct ContentView: View {
                 }
                 .tag(1)
                 
+                GroupListView()
+                    .tabItem {
+                        Label("Groups", systemImage: "person.2.fill")
+                    }
+                    .tag(4)
+                
                 AnalyticsView()
                     .tabItem {
                         Label("Analytics", systemImage: "chart.line.uptrend.xyaxis")

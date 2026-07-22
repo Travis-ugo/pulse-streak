@@ -62,6 +62,7 @@ class DataManager: ObservableObject {
     }
     
     func delete(_ habit: Habit) {
+        NotificationManager.shared.cancelReminder(for: habit.id.uuidString)
         habits.removeAll { $0.id == habit.id }
     }
     

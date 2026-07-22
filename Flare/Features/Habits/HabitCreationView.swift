@@ -112,7 +112,7 @@ struct HabitCreationView: View {
         dataManager.insert(newHabit)
         
         if dailyMotivation {
-            NotificationManager.shared.scheduleHabitReminder(for: title, time: reminderTime)
+            NotificationManager.shared.scheduleHabitReminder(id: newHabit.id.uuidString, title: title, time: reminderTime)
         }
         
         showSuccessScreen = true

@@ -98,7 +98,7 @@ struct CreateGroupView: View {
         
         Task {
             do {
-                try await groupManager.createGroup(
+                let groupId = try await groupManager.createGroup(
                     name: groupName,
                     taskType: taskType,
                     sharedTaskName: taskType == .shared ? sharedTaskName : nil,
@@ -107,7 +107,7 @@ struct CreateGroupView: View {
                     creator: user
                 )
                 if dailyMotivation {
-                    NotificationManager.shared.scheduleHabitReminder(for: groupName, time: reminderTime)
+                    NotificationManager.shared.scheduleHabitReminder(id: groupId, title: groupName, time: reminderTime)
                 }
                 dismiss()
             } catch {
