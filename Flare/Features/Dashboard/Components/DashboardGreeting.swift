@@ -4,13 +4,10 @@ struct DashboardGreeting: View {
     let greetingMessage: String
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(greetingMessage)
+        VStack(alignment: .leading, spacing: 6) {
+            Text("\(greetingMessage) 🔥")
                 .font(.system(size: 28, weight: .bold, design: .rounded))
                 .foregroundColor(.white)
-            
-            Text("🔥")
-                .font(.title)
             
             Text("Your momentum is undeniable today.")
                 .font(.subheadline)

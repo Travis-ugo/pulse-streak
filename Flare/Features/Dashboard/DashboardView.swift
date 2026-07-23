@@ -104,7 +104,10 @@ struct DashboardView: View {
                     
                     // 3. Main Streak Card
                     DashboardStreakCard(
+                        currentStreak: calculateCurrentStreak(),
                         longestStreak: calculateLongestStreak(),
+                        currentLevel: currentLevel,
+                        currentXP: currentXP,
                         rankName: rankName,
                         todayProgress: calculateTodayProgress()
                     )
@@ -166,6 +169,10 @@ struct DashboardView: View {
     }
     
     // MARK: - Helpers
+    private func calculateCurrentStreak() -> Int {
+        return habits.map { $0.streakCount }.max() ?? 0
+    }
+    
     private func calculateLongestStreak() -> Int {
         return habits.map { $0.longestStreak }.max() ?? 0
     }
