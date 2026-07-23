@@ -74,6 +74,77 @@ struct MemberRow: View {
     }
 }
 
+struct OrbitalMemberAvatar: View {
+    let memberId: String
+    let hasCompleted: Bool
+    let group: StreakGroup
+    @State private var member: User?
+    @State private var scale: CGFloat = 1.0
+    
+    var body: some View {
+        ZStack {
+            if let member = member {
+                Button(action: {
+                    nudgeMember()
+                }) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.stitchSurface)
+                            .frame(width: 46, height: 46)
+                            .shadow(color: hasCompleted ? Color.stitchYellow.opacity(0.5) : Color.black.opacity(0.4), radius: hasCompleted ? 10 : 4)
+                        
+                        Text(member.initials)
+                            .font(.system(size: 14, weight: .bold, design: .rounded))
+                            .foregroundColor(hasCompleted ? Color.stitchYellow : .white)
+                    }
+                    .scaleEffect(scale)
+                    .overlay(
+                        Circle()
+                            .stroke(hasCompleted ? Color.stitchYellow : Color.stitchSurface, lineWidth: 2)
+                    )
+                }
+                .buttonStyle(PlainButtonStyle())
+            } else {
+                Circle()
+                    .fill(Color.stitchSurface)
+                    .frame(width: 46, height: 46)
+                    .overlay(Circle().stroke(Color.stitchSurface, lineWidth: 2))
+            }
+        }
+        .onAppear {
+            Task {
+                member = await AuthManager.shared.fetchUser(by: memberId)
+            }
+        }
+    }
+    
+    private func nudgeMember() {
+        guard let currentUser = AuthManager.shared.currentUser,
+              memberId != currentUser.id else { return }
+        
+        let generator = UIImpactFeedbackGenerator(style: .medium)
+        generator.impactOccurred()
+        
+        withAnimation(.spring(response: 0.2, dampingFraction: 0.5)) {
+            scale = 0.85
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            withAnimation(.spring(response: 0.2, dampingFraction: 0.5)) {
+                scale = 1.0
+            }
+        }
+        
+        Task {
+            do {
+                try await GroupManager.shared.nudgeMember(memberId: memberId, in: group, sender: currentUser)
+            } catch {
+                print("Error nudging member: \(error)")
+            }
+        }
+    }
+}
+
 struct NudgeNotificationView: View {
     let nudge: GroupNudge
     

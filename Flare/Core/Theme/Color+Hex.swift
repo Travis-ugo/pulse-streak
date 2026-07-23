@@ -29,6 +29,7 @@ extension Color {
     // MARK: - Stitch Theme Colors
     static let stitchBackground = Color(hex: "#0A0A0A")
     static let stitchSurface = Color(hex: "#161616")
+    static let stitchYellow = Color(hex: "#FFD60A")
     
     static var stitchPrimary: Color {
         let theme = UserDefaults.standard.string(forKey: "selectedTheme") ?? "EMBER"

@@ -2,6 +2,7 @@ import Foundation
 import Combine
 import FirebaseCore
 import FirebaseFirestore
+import UIKit
 
 @MainActor
 class GroupManager: ObservableObject {
@@ -44,11 +45,34 @@ class GroupManager: ObservableObject {
         }
         
         // Listen for nudges sent to this user
+        var isFirstNudgeLoad = true
         nudgesListener = db.collection("nudges")
             .whereField("receiverId", isEqualTo: userId)
             .addSnapshotListener { snapshot, error in
                 guard let documents = snapshot?.documents else { return }
-                self.activeNudges = documents.compactMap { try? $0.data(as: GroupNudge.self) }
+                let fetchedNudges = documents.compactMap { try? $0.data(as: GroupNudge.self) }
+                
+                if !isFirstNudgeLoad {
+                    let newNudges = fetchedNudges.filter { fetched in
+                        !self.activeNudges.contains(where: { $0.id == fetched.id })
+                    }
+                    
+                    for nudge in newNudges {
+                        // Vibrate
+                        let generator = UINotificationFeedbackGenerator()
+                        generator.notificationOccurred(.warning)
+                        
+                        // Push notification
+                        NotificationManager.shared.triggerLocalNudgeNotification(
+                            title: "Nudge! 👉",
+                            body: "\(nudge.senderName) nudged you in \(nudge.groupName)!",
+                            id: nudge.id
+                        )
+                    }
+                }
+                
+                self.activeNudges = fetchedNudges
+                isFirstNudgeLoad = false
             }
     }
     
