@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import FirebaseCore
 import FirebaseFirestore
 
 @MainActor
@@ -10,7 +11,7 @@ class GroupManager: ObservableObject {
     @Published var pendingInvites: [GroupInvite] = []
     @Published var activeNudges: [GroupNudge] = []
     
-    private let db = Firestore.firestore()
+    private var db: Firestore { Firestore.firestore() }
     private var groupsListener: ListenerRegistration?
     private var invitesListener: ListenerRegistration?
     private var nudgesListener: ListenerRegistration?
@@ -18,6 +19,7 @@ class GroupManager: ObservableObject {
     private init() {}
     
     func startListening(userId: String) {
+        guard FirebaseApp.app() != nil else { return }
         guard groupsListener == nil else { return }
         
         // Listen for groups where user is a member
@@ -156,7 +158,7 @@ class GroupManager: ObservableObject {
         let today = Calendar.current.startOfDay(for: Date())
         let groupDoc = db.collection("groups").document(groupId)
         
-        try await db.runTransaction { (transaction, errorPointer) -> Any? in
+        _ = try await db.runTransaction { (transaction, errorPointer) -> Any? in
             let groupSnapshot: DocumentSnapshot
             do {
                 groupSnapshot = try transaction.getDocument(groupDoc)

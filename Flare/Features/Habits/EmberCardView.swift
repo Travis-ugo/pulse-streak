@@ -1,9 +1,11 @@
 import SwiftUI
 
 struct EmberCardView: View {
+    @EnvironmentObject private var dataManager: DataManager
     let habit: Habit
     @State private var isCompletedToday: Bool = false
     @State private var showingShareSheet: Bool = false
+    @State private var showingDeleteConfirmation: Bool = false
     
     var body: some View {
         HStack(spacing: 16) {
@@ -92,6 +94,12 @@ struct EmberCardView: View {
             }) {
                 Label("Share Streak", systemImage: "square.and.arrow.up")
             }
+            
+            Button(role: .destructive) {
+                showingDeleteConfirmation = true
+            } label: {
+                Label("Delete Habit", systemImage: "trash")
+            }
         }
         .sheet(isPresented: $showingShareSheet) {
             StreakSharePreviewView(
@@ -99,6 +107,16 @@ struct EmberCardView: View {
                 streakCount: habit.streakCount,
                 initialColorHex: habit.colorHex
             )
+        }
+        .alert("Delete Habit", isPresented: $showingDeleteConfirmation) {
+            Button("Delete", role: .destructive) {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                    dataManager.delete(habit)
+                }
+            }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text("Are you sure you want to delete '\(habit.title)'? This will permanently erase your streak history for this habit.")
         }
         .onAppear {
             checkCompletionStatus()

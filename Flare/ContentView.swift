@@ -74,24 +74,47 @@ struct ContentView: View {
         }
     }
 }
+//
+//#Preview {
+//    let _ = {
+//        UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
+//        AuthManager.shared.currentUser = User(
+//            id: "preview-user-id",
+//            email: "preview@example.com",
+//            displayName: "Jane Doe",
+//            joinedAt: Date()
+//        )
+//        AuthManager.shared.isLoading = false
+//        DataManager.shared.habits = [
+//            Habit(title: "Morning Meditation", icon: "figure.mind.and.body", colorHex: "#FF8C00"),
+//            Habit(title: "Read 10 Pages", icon: "book.fill", colorHex: "#FF8C00"),
+//            Habit(title: "Swift Coding", icon: "chevron.left.forwardslash.chevron.right", colorHex: "#FF8C00")
+//        ]
+//    }()
+//    
+//    return ContentView()
+//        .environmentObject(DataManager.shared)
+//}
 
 #Preview {
-    let _ = {
-        UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
-        AuthManager.shared.currentUser = User(
-            id: "preview-user-id",
-            email: "preview@example.com",
-            displayName: "Jane Doe",
-            joinedAt: Date()
-        )
-        AuthManager.shared.isLoading = false
-        DataManager.shared.habits = [
-            Habit(title: "Morning Meditation", icon: "figure.mind.and.body", colorHex: "#FF8C00"),
-            Habit(title: "Read 10 Pages", icon: "book.fill", colorHex: "#FF8C00"),
-            Habit(title: "Swift Coding", icon: "chevron.left.forwardslash.chevron.right", colorHex: "#FF8C00")
-        ]
-    }()
-    
-    return ContentView()
-        .environmentObject(DataManager.shared)
+    ContentView()
+        .environmentObject({
+            let manager = DataManager.shared
+            manager.habits = [
+                Habit(title: "Morning Meditation", icon: "figure.mind.and.body", colorHex: "#FF8C00"),
+                Habit(title: "Read 10 Pages", icon: "book.fill", colorHex: "#FF8C00"),
+                Habit(title: "Swift Coding", icon: "chevron.left.forwardslash.chevron.right", colorHex: "#FF8C00")
+            ]
+            return manager
+        }())
+        .onAppear {
+            UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
+            AuthManager.shared.isLoading = false
+            AuthManager.shared.currentUser = User(
+                id: "preview-user-id",
+                email: "preview@example.com",
+                displayName: "Jane Doe",
+                joinedAt: Date()
+            )
+        }
 }

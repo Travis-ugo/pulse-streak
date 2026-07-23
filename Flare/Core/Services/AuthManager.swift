@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import FirebaseCore
 import FirebaseAuth
 import FirebaseFirestore
 
@@ -12,7 +13,7 @@ class AuthManager: ObservableObject {
     
     private var authListener: AuthStateDidChangeListenerHandle?
     @Published var userCache: [String: User] = [:]
-    private let db = Firestore.firestore()
+    private var db: Firestore { Firestore.firestore() }
     
     private init() {
         listenToAuthState()
@@ -34,6 +35,10 @@ class AuthManager: ObservableObject {
     }
     
     func listenToAuthState() {
+        guard FirebaseApp.app() != nil else {
+            self.isLoading = false
+            return
+        }
         authListener = Auth.auth().addStateDidChangeListener { [weak self] _, firebaseUser in
             guard let self = self else { return }
             if let firebaseUser = firebaseUser {

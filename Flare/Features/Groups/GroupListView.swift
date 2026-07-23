@@ -1,4 +1,5 @@
 import SwiftUI
+import FirebaseCore
 
 struct GroupListView: View {
     @ObservedObject var groupManager = GroupManager.shared
@@ -82,5 +83,68 @@ struct GroupListView: View {
 }
 
 #Preview {
-    GroupListView()
+    let _ = {
+        // Initialize Firebase for previews if not already configured
+        if FirebaseApp.app() == nil {
+            FirebaseApp.configure()
+        }
+        
+        // Mock current user
+        AuthManager.shared.currentUser = User(
+            id: "preview-user-id",
+            email: "preview@example.com",
+            displayName: "Jane Doe",
+            photoURL: nil,
+            joinedAt: Date()
+        )
+        AuthManager.shared.isLoading = false
+        
+        // Mock groups
+        GroupManager.shared.groups = [
+            StreakGroup(
+                id: "preview-group-id-1",
+                name: "Gym Bros",
+                creatorId: "user1",
+                memberIds: ["preview-user-id", "user2"],
+                taskType: .shared,
+                sharedTaskName: "Daily Workout",
+                streakCount: 5,
+                lastStreakUpdate: nil,
+                createdAt: Date(),
+                memberCompletions: ["preview-user-id": Date()],
+                icon: "flame.fill",
+                reminderTime: nil
+            ),
+            StreakGroup(
+                id: "preview-group-id-2",
+                name: "Coders",
+                creatorId: "preview-user-id",
+                memberIds: ["preview-user-id", "user3"],
+                taskType: .individual,
+                sharedTaskName: nil,
+                streakCount: 3,
+                lastStreakUpdate: nil,
+                createdAt: Date(),
+                memberCompletions: [:],
+                icon: "keyboard.fill",
+                reminderTime: nil
+            )
+        ]
+        
+        // Mock pending invites
+        GroupManager.shared.pendingInvites = [
+            GroupInvite(
+                id: "invite1",
+                groupId: "group3",
+                groupName: "Early Risers",
+                senderId: "user4",
+                senderName: "Alice",
+                receiverEmail: "preview@example.com",
+                status: .pending,
+                createdAt: Date()
+            )
+        ]
+    }()
+    
+    return GroupListView()
 }
